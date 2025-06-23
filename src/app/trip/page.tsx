@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTripId } from '@/hooks/use-trip-id';
-import { getTripPlans } from '@/lib/mock-data';
+import { getTripPlans } from '@/lib/database';
 import type { TripDay } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';

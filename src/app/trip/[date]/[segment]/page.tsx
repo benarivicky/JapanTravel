@@ -1,4 +1,4 @@
-import { getTripSegment } from '@/lib/mock-data';
+import { getTripSegment } from '@/lib/database';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,7 @@ export default async function TripSegmentPage({ params }: DetailPageProps) {
     notFound();
   }
 
-  const segment = await getTripSegment(params.date, segmentNumeric);
+  const segment = await getTripSegment('TRIP_123', params.date, segmentNumeric);
 
   if (!segment) {
     notFound();
@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: DetailPageProps) {
   if (isNaN(segmentNumeric)) {
     return { title: 'פרטי טיול' }
   }
-  const segment = await getTripSegment(params.date, segmentNumeric);
+  const segment = await getTripSegment('TRIP_123', params.date, segmentNumeric);
 
   if (!segment) {
     return { title: 'פרטי טיול' }
