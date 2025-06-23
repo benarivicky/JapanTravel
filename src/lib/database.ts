@@ -2,6 +2,18 @@ import { db } from './firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { TripSegment } from './types';
 
+const getTimeSegment = (index: number): { name: string; numeric: number } => {
+    const segments = [
+        { name: 'בוקר', numeric: 1 },
+        { name: 'צהריים', numeric: 2 },
+        { name: 'ערב', numeric: 3 },
+    ];
+    if (index < segments.length) {
+        return segments[index];
+    }
+    return { name: `פעילות ${index + 1}`, numeric: index + 1 };
+};
+
 export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
   console.log(`Fetching trip plans from Firestore for tripId: ${tripId}`);
   if (!tripId) {
@@ -10,26 +22,61 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
   }
 
   try {
-    const tripDocRef = doc(db, 'trips', tripId);
+    const tripDocRef = doc(db, 'tripPlans', tripId);
     const tripDocSnap = await getDoc(tripDocRef);
 
     if (tripDocSnap.exists()) {
       const tripData = tripDocSnap.data();
       console.log('Trip data found in Firestore:', tripData);
       
-      const segments = tripData.segments as TripSegment[];
-      if (Array.isArray(segments)) {
-        return segments;
-      } else {
-        throw new Error("נתוני הטיול אינם תקינים: שדה 'segments' חסר או אינו מערך.");
+      const dailyItinerary = tripData.dailyItinerary;
+      if (!Array.isArray(dailyItinerary)) {
+        throw new Error("נתוני הטיול אינם תקינים: שדה 'dailyItinerary' חסר או אינו מערך.");
       }
+
+      const allSegments: TripSegment[] = [];
+
+      dailyItinerary.forEach((day: any) => {
+        if (day.activities && Array.isArray(day.activities)) {
+          day.activities.forEach((activity: any, index: number) => {
+            const timeSegment = getTimeSegment(index);
+            
+            let linkTitle: string | undefined = undefined;
+            let linkLink: string | undefined = undefined;
+
+            if (activity.externalLinks && Array.isArray(activity.externalLinks) && activity.externalLinks.length > 0) {
+              const firstLink = activity.externalLinks[0];
+              if (firstLink && typeof firstLink === 'object') {
+                linkTitle = firstLink.title || firstLink.name;
+                linkLink = firstLink.link || firstLink.url;
+              }
+            }
+
+            const segment: TripSegment = {
+              id: `${day.Date}-${index}`,
+              tripId: tripId,
+              date: day.Date,
+              timeSegment: timeSegment.name,
+              timeSegmentNumeric: timeSegment.numeric,
+              summary: `${timeSegment.name} ב${day.City || 'מיקום לא ידוע'}`,
+              detailedContent: activity.detailedContent || '<p>אין פירוט זמין.</p>',
+              linkTitle: linkTitle,
+              linkLink: linkLink,
+            };
+            allSegments.push(segment);
+          });
+        }
+      });
+
+      console.log('Transformed segments:', allSegments);
+      return allSegments;
+
     } else {
-      console.log(`No such document in Firestore! Path: trips/${tripId}`);
+      console.log(`No such document in Firestore! Path: tripPlans/${tripId}`);
       return [];
     }
   } catch (error) {
     console.error('Error fetching trip plans from Firestore:', error);
-    // Re-throw the error to be handled by the caller
     throw error;
   }
 }

@@ -35,7 +35,7 @@ export default function TripPage() {
           const segments = await getTripPlans(tripId);
           
           if (segments.length === 0) {
-            setError(`לא נמצאו נתוני טיול עבור מזהה "${tripId}". אנא ודא שהמסמך קיים ב-Firestore בנתיב "trips/${tripId}" ומכיל מערך בשם "segments".`);
+            setError(`לא נמצאו נתוני טיול עבור מזהה "${tripId}". אנא ודא שהמסמך קיים ב-Firestore בנתיב "tripPlans/${tripId}" ומכיל מערך תקין בשם "dailyItinerary".`);
             setTripDays([]);
           } else {
             const groupedByDate = segments.reduce((acc, segment) => {
