@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Fredoka', 'sans-serif'],
-        headline: ['Fredoka', 'sans-serif'],
+        body: ['"Noto Sans Hebrew"', 'sans-serif'],
+        headline: ['"Noto Sans Hebrew"', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {

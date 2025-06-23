@@ -11,18 +11,11 @@ export async function signInWithEmailAndPassword(email: string, password: string
     const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
-    console.log("Login successful with Firebase");
+    console.log("Login successful with Firebase for user:", user.uid);
 
-    // For this specific app, we'll hardcode the tripId for the test user
-    // In a real app, this would likely come from a database (e.g., Firestore)
-    // linked to the user's UID.
-    if (user.email && user.email.toLowerCase() === 'test@example.com') {
-      return { success: true, tripId: 'TRIP_123' };
-    }
-
-    // For any other user, we could potentially use their UID as a tripId
-    // but the mock data only supports TRIP_123.
-    return { success: true, tripId: user.uid };
+    // For this demo app, we'll always return the same tripId since we are using mock data.
+    // In a real app, this would come from a database.
+    return { success: true, tripId: 'TRIP_123' };
 
   } catch (error) {
     console.error("Firebase login failed", error);
