@@ -64,11 +64,8 @@ const tripPlans: TripSegment[] = [
 
 export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
   console.log(`Fetching trip plans from mock data for tripId: ${tripId}`);
-  // Only return plans if the tripId matches the hardcoded one.
-  if (tripId === '434') {
-    return Promise.resolve(tripPlans);
-  }
-  return Promise.resolve([]);
+  // For this demo app, we'll always return the same trip plan.
+  return Promise.resolve(tripPlans);
 }
 
 export async function getTripSegment(tripId: string, date: string, segmentNumeric: number): Promise<TripSegment | undefined> {
