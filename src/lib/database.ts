@@ -3,7 +3,7 @@ import type { TripSegment } from './types';
 const tripPlans: TripSegment[] = [
   {
     id: '1',
-    tripId: 'TRIP_123',
+    tripId: '434',
     date: '2024-10-20',
     timeSegment: 'בוקר',
     timeSegmentNumeric: 1,
@@ -14,7 +14,7 @@ const tripPlans: TripSegment[] = [
   },
   {
     id: '2',
-    tripId: 'TRIP_123',
+    tripId: '434',
     date: '2024-10-20',
     timeSegment: 'צהריים',
     timeSegmentNumeric: 2,
@@ -23,7 +23,7 @@ const tripPlans: TripSegment[] = [
   },
   {
     id: '3',
-    tripId: 'TRIP_123',
+    tripId: '434',
     date: '2024-10-20',
     timeSegment: 'ערב',
     timeSegmentNumeric: 3,
@@ -32,7 +32,7 @@ const tripPlans: TripSegment[] = [
   },
   {
     id: '4',
-    tripId: 'TRIP_123',
+    tripId: '434',
     date: '2024-10-21',
     timeSegment: 'בוקר',
     timeSegmentNumeric: 1,
@@ -41,7 +41,7 @@ const tripPlans: TripSegment[] = [
   },
   {
     id: '5',
-    tripId: 'TRIP_123',
+    tripId: '434',
     date: '2024-10-21',
     timeSegment: 'צהריים',
     timeSegmentNumeric: 2,
@@ -52,7 +52,7 @@ const tripPlans: TripSegment[] = [
   },
   {
     id: '6',
-    tripId: 'TRIP_123',
+    tripId: '434',
     date: '2024-10-21',
     timeSegment: 'ערב',
     timeSegmentNumeric: 3,
@@ -65,7 +65,7 @@ const tripPlans: TripSegment[] = [
 export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
   console.log(`Fetching trip plans from mock data for tripId: ${tripId}`);
   // Only return plans if the tripId matches the hardcoded one.
-  if (tripId === 'TRIP_123') {
+  if (tripId === '434') {
     return Promise.resolve(tripPlans);
   }
   return Promise.resolve([]);

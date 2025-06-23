@@ -15,7 +15,7 @@ export async function signInWithEmailAndPassword(email: string, password: string
 
     // For this demo app, we'll always return the same tripId since we are using mock data.
     // In a real app, this would come from a database.
-    return { success: true, tripId: 'TRIP_123' };
+    return { success: true, tripId: '434' };
 
   } catch (error) {
     console.error("Firebase login failed", error);
