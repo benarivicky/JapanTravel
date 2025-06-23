@@ -1,0 +1,122 @@
+'use client';
+
+import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useTripId } from '@/hooks/use-trip-id';
+import { getTripPlans } from '@/lib/mock-data';
+import type { TripDay } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+
+export default function TripPage() {
+  const router = useRouter();
+  const { tripId, loading: tripIdLoading, clearTripId } = useTripId();
+  const [tripDays, setTripDays] = useState<TripDay[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tripIdLoading && !tripId) {
+      router.replace('/');
+    }
+  }, [tripId, tripIdLoading, router]);
+
+  useEffect(() => {
+    if (tripId) {
+      const fetchTripData = async () => {
+        setLoading(true);
+        const segments = await getTripPlans(tripId);
+        
+        const groupedByDate = segments.reduce((acc, segment) => {
+          const date = segment.date;
+          if (!acc[date]) {
+            acc[date] = [];
+          }
+          acc[date].push(segment);
+          return acc;
+        }, {} as Record<string, typeof segments>);
+
+        const days: TripDay[] = Object.entries(groupedByDate)
+          .map(([date, segments]) => ({
+            date,
+            segments: segments.sort((a, b) => a.timeSegmentNumeric - b.timeSegmentNumeric),
+          }))
+          .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        setTripDays(days);
+        setLoading(false);
+      };
+      fetchTripData();
+    }
+  }, [tripId]);
+
+  const formattedDates = useMemo(() => {
+    return tripDays.map(day => {
+      const date = new Date(day.date);
+      return new Intl.DateTimeFormat('he-IL', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      }).format(date);
+    })
+  }, [tripDays])
+
+  const handleLogout = () => {
+    clearTripId();
+    router.push('/');
+  };
+
+  if (tripIdLoading || loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <header className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-headline font-bold text-right text-foreground">
+          תוכנית הטיול
+        </h1>
+        <Button variant="outline" onClick={handleLogout}>
+          התנתק
+        </Button>
+      </header>
+      
+      <ScrollArea className="w-full whitespace-nowrap rounded-lg border">
+        <div className="flex w-max space-x-4 space-x-reverse p-4">
+          {tripDays.map((day, index) => (
+            <Card key={day.date} className="w-[350px] flex flex-col">
+              <CardHeader>
+                <CardTitle className="text-right text-xl font-semibold">
+                  {formattedDates[index]}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col flex-grow">
+                <div className="flex-grow">
+                  {day.segments.map((segment, segIndex) => (
+                    <div key={segment.id}>
+                      <Link href={`/trip/${segment.date}/${segment.timeSegmentNumeric}`} passHref>
+                        <div className="block p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors">
+                          <h4 className="font-bold text-right">{segment.timeSegment}</h4>
+                          <p className="text-muted-foreground text-right">{segment.summary}</p>
+                        </div>
+                      </Link>
+                      {segIndex < day.segments.length - 1 && <Separator />}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    </div>
+  );
+}
