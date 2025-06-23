@@ -21,8 +21,7 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
       if (Array.isArray(segments)) {
         return segments;
       } else {
-        console.error("Firestore document exists, but 'segments' field is not an array or is missing.");
-        return [];
+        throw new Error("נתוני הטיול אינם תקינים: שדה 'segments' חסר או אינו מערך.");
       }
     } else {
       console.log(`No such document in Firestore! Path: trips/${tripId}`);
@@ -30,7 +29,8 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
     }
   } catch (error) {
     console.error('Error fetching trip plans from Firestore:', error);
-    return [];
+    // Re-throw the error to be handled by the caller
+    throw error;
   }
 }
 

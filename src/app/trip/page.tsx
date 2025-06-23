@@ -10,13 +10,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Terminal } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export default function TripPage() {
   const router = useRouter();
   const { tripId, loading: tripIdLoading, clearTripId } = useTripId();
   const [tripDays, setTripDays] = useState<TripDay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!tripIdLoading && !tripId) {
@@ -28,26 +30,38 @@ export default function TripPage() {
     if (tripId) {
       const fetchTripData = async () => {
         setLoading(true);
-        const segments = await getTripPlans(tripId);
-        
-        const groupedByDate = segments.reduce((acc, segment) => {
-          const date = segment.date;
-          if (!acc[date]) {
-            acc[date] = [];
+        setError(null);
+        try {
+          const segments = await getTripPlans(tripId);
+          
+          if (segments.length === 0) {
+            setError(`לא נמצאו נתוני טיול עבור מזהה "${tripId}". אנא ודא שהמסמך קיים ב-Firestore בנתיב "trips/${tripId}" ומכיל מערך בשם "segments".`);
+            setTripDays([]);
+          } else {
+            const groupedByDate = segments.reduce((acc, segment) => {
+              const date = segment.date;
+              if (!acc[date]) {
+                acc[date] = [];
+              }
+              acc[date].push(segment);
+              return acc;
+            }, {} as Record<string, typeof segments>);
+
+            const days: TripDay[] = Object.entries(groupedByDate)
+              .map(([date, segments]) => ({
+                date,
+                segments: segments.sort((a, b) => a.timeSegmentNumeric - b.timeSegmentNumeric),
+              }))
+              .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+            setTripDays(days);
           }
-          acc[date].push(segment);
-          return acc;
-        }, {} as Record<string, typeof segments>);
-
-        const days: TripDay[] = Object.entries(groupedByDate)
-          .map(([date, segments]) => ({
-            date,
-            segments: segments.sort((a, b) => a.timeSegmentNumeric - b.timeSegmentNumeric),
-          }))
-          .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-        setTripDays(days);
-        setLoading(false);
+        } catch (e: any) {
+            setError(`אירעה שגיאה בטעינת הטיול. ייתכן שיש בעיית הרשאות ב-Firestore או שהנתונים אינם תקינים. שגיאה: ${e.message}`);
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
       };
       fetchTripData();
     }
@@ -88,35 +102,45 @@ export default function TripPage() {
         </Button>
       </header>
       
-      <ScrollArea className="w-full whitespace-nowrap rounded-lg border">
-        <div className="flex w-max space-x-4 space-x-reverse p-4">
-          {tripDays.map((day, index) => (
-            <Card key={day.date} className="w-[350px] flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-right text-xl font-semibold">
-                  {formattedDates[index]}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col flex-grow">
-                <div className="flex-grow">
-                  {day.segments.map((segment, segIndex) => (
-                    <div key={segment.id}>
-                      <Link href={`/trip/${segment.date}/${segment.timeSegmentNumeric}`} passHref>
-                        <div className="block p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors">
-                          <h4 className="font-bold text-right">{segment.timeSegment}</h4>
-                          <p className="text-muted-foreground text-right">{segment.summary}</p>
-                        </div>
-                      </Link>
-                      {segIndex < day.segments.length - 1 && <Separator />}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      {error ? (
+        <Alert variant="destructive" dir="rtl">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>שגיאה בטעינת הטיול</AlertTitle>
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <ScrollArea className="w-full whitespace-nowrap rounded-lg border">
+          <div className="flex w-max space-x-4 space-x-reverse p-4">
+            {tripDays.map((day, index) => (
+              <Card key={day.date} className="w-[350px] flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-right text-xl font-semibold">
+                    {formattedDates[index]}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col flex-grow">
+                  <div className="flex-grow">
+                    {day.segments.map((segment, segIndex) => (
+                      <div key={segment.id}>
+                        <Link href={`/trip/${segment.date}/${segment.timeSegmentNumeric}`} passHref>
+                          <div className="block p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors">
+                            <h4 className="font-bold text-right">{segment.timeSegment}</h4>
+                            <p className="text-muted-foreground text-right">{segment.summary}</p>
+                          </div>
+                        </Link>
+                        {segIndex < day.segments.length - 1 && <Separator />}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      )}
     </div>
   );
 }
