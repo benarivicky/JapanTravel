@@ -1,9 +1,9 @@
-import { getTripSegment } from '@/lib/database';
+import { getTripPlans, getTripSegment } from '@/lib/database';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
 
 interface DetailPageProps {
   params: {
@@ -18,7 +18,19 @@ export default async function TripSegmentPage({ params }: DetailPageProps) {
     notFound();
   }
 
-  const segment = await getTripSegment('434', params.date, segmentNumeric);
+  const allSegments = await getTripPlans('434');
+  const dailySegments = allSegments
+    .filter((s) => s.date === params.date)
+    .sort((a, b) => a.timeSegmentNumeric - b.timeSegmentNumeric);
+  
+  const currentIndex = dailySegments.findIndex((s) => s.timeSegmentNumeric === segmentNumeric);
+
+  if (currentIndex === -1) {
+    notFound();
+  }
+
+  const segment = dailySegments[currentIndex];
+  const nextSegment = currentIndex < dailySegments.length - 1 ? dailySegments[currentIndex + 1] : null;
 
   if (!segment) {
     notFound();
@@ -62,7 +74,7 @@ export default async function TripSegmentPage({ params }: DetailPageProps) {
                     link.linkLink && link.linkTitle && (
                         <li key={index} className="mt-1">
                           <Button asChild variant="link" className="p-0 h-auto">
-                            <a href={link.linkLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-lg">
+                            <a href={link.linkLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-lg text-link">
                               {link.linkTitle}
                               <ExternalLink className="h-5 w-5" />
                             </a>
@@ -73,6 +85,18 @@ export default async function TripSegmentPage({ params }: DetailPageProps) {
                 </ul>
             </div>
           )}
+
+          <div className="mt-8 pt-6 border-t flex justify-end">
+            {nextSegment && (
+              <Button asChild>
+                <Link href={`/trip/${nextSegment.date}/${nextSegment.timeSegmentNumeric}`} className="flex items-center gap-2">
+                  הפעילות הבאה
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+          </div>
+
         </CardContent>
       </Card>
     </main>
