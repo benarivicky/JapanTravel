@@ -127,7 +127,7 @@ export default function TripPage() {
                         <Link href={`/trip/${segment.date}/${segment.timeSegmentNumeric}`} passHref>
                           <div className="block p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors">
                             <h4 className="font-bold text-right">{segment.timeSegment}</h4>
-                            <p className="text-muted-foreground text-right">{segment.summary}</p>
+                            <div className="text-muted-foreground text-right" dangerouslySetInnerHTML={{ __html: segment.summary }}></div>
                           </div>
                         </Link>
                         {segIndex < day.segments.length - 1 && <Separator />}

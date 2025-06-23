@@ -2,18 +2,6 @@ import { db } from './firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { TripSegment } from './types';
 
-const getTimeSegment = (index: number): { name: string; numeric: number } => {
-    const segments = [
-        { name: 'בוקר', numeric: 1 },
-        { name: 'צהריים', numeric: 2 },
-        { name: 'ערב', numeric: 3 },
-    ];
-    if (index < segments.length) {
-        return segments[index];
-    }
-    return { name: `פעילות ${index + 1}`, numeric: index + 1 };
-};
-
 export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
   console.log(`Fetching trip plans from Firestore for tripId: ${tripId}`);
   if (!tripId) {
@@ -41,30 +29,21 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
         const city = day.City || day.city;
 
         if (day.activities && Array.isArray(day.activities) && date) {
-          day.activities.forEach((activity: any, index: number) => {
-            const timeSegment = getTimeSegment(index);
-            
-            let linkTitle: string | undefined = undefined;
-            let linkLink: string | undefined = undefined;
-
-            if (activity.externalLinks && Array.isArray(activity.externalLinks) && activity.externalLinks.length > 0) {
-              const firstLink = activity.externalLinks[0];
-              if (firstLink && typeof firstLink === 'object') {
-                linkTitle = firstLink.title || firstLink.name;
-                linkLink = firstLink.link || firstLink.url;
-              }
-            }
+          day.activities.forEach((activity: any) => {
+            const externalLinks = (activity.externalLinks || []).map((link: any) => ({
+              linkTitle: link.LinkTitle || link.linkTitle,
+              linkLink: link.LinkLink || link.linkLink,
+            })).filter((link: any) => link.linkLink && link.linkTitle);
 
             const segment: TripSegment = {
-              id: `${date}-${index}`,
+              id: `${date}-${activity.timeSegmentNumeric}`,
               tripId: tripId,
               date: date,
-              timeSegment: timeSegment.name,
-              timeSegmentNumeric: timeSegment.numeric,
-              summary: `${timeSegment.name} ב${city || 'מיקום לא ידוע'}`,
+              timeSegment: activity.timeSegment || 'פעילות',
+              timeSegmentNumeric: activity.timeSegmentNumeric || 0,
+              summary: activity.summary || `פעילות ב${city || 'מיקום לא ידוע'}`,
               detailedContent: activity.detailedContent || '<p>אין פירוט זמין.</p>',
-              linkTitle: linkTitle,
-              linkLink: linkLink,
+              externalLinks: externalLinks.length > 0 ? externalLinks : undefined,
             };
             allSegments.push(segment);
           });

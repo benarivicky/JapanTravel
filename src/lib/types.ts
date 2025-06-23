@@ -1,13 +1,17 @@
+export interface ExternalLink {
+  linkTitle?: string;
+  linkLink?: string;
+}
+
 export interface TripSegment {
   id: string;
   tripId: string;
   date: string; // "YYYY-MM-DD"
   timeSegment: string; // e.g., "בוקר", "צהריים", "ערב"
-  timeSegmentNumeric: number; // 1, 2, 3 for sorting
+  timeSegmentNumeric: number; // for sorting
   summary: string;
   detailedContent: string; // HTML content
-  linkTitle?: string;
-  linkLink?: string;
+  externalLinks?: ExternalLink[];
 }
 
 export interface TripDay {

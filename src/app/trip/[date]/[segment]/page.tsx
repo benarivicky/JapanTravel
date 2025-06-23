@@ -46,7 +46,7 @@ export default async function TripSegmentPage({ params }: DetailPageProps) {
           <CardTitle className="text-3xl font-bold text-right">
             {segment.timeSegment} - {formattedDate}
           </CardTitle>
-          <p className="text-muted-foreground text-right text-lg">{segment.summary}</p>
+          <div className="text-muted-foreground text-right text-lg" dangerouslySetInnerHTML={{ __html: segment.summary }}/>
         </CardHeader>
         <CardContent>
           <div
@@ -54,14 +54,23 @@ export default async function TripSegmentPage({ params }: DetailPageProps) {
             dangerouslySetInnerHTML={{ __html: segment.detailedContent }}
           />
 
-          {segment.linkLink && segment.linkTitle && (
-            <div className="mt-8 text-right">
-              <Button asChild variant="link" className="p-0 h-auto">
-                <a href={segment.linkLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-lg">
-                  {segment.linkTitle}
-                  <ExternalLink className="h-5 w-5" />
-                </a>
-              </Button>
+          {segment.externalLinks && segment.externalLinks.length > 0 && (
+            <div className="mt-8 text-right space-y-2">
+              <h4 className="text-xl font-bold">קישורים שימושיים</h4>
+                <ul className="list-none p-0">
+                {segment.externalLinks.map((link, index) => (
+                    link.linkLink && link.linkTitle && (
+                        <li key={index} className="mt-1">
+                          <Button asChild variant="link" className="p-0 h-auto">
+                            <a href={link.linkLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-lg">
+                              {link.linkTitle}
+                              <ExternalLink className="h-5 w-5" />
+                            </a>
+                          </Button>
+                        </li>
+                    )
+                ))}
+                </ul>
             </div>
           )}
         </CardContent>
@@ -81,7 +90,9 @@ export async function generateMetadata({ params }: DetailPageProps) {
     return { title: 'פרטי טיול' }
   }
 
+  const cleanSummary = segment.summary.replace(/<[^>]*>?/gm, '');
+
   return {
-    title: `${segment.timeSegment} - ${segment.summary} | טיול ליפן`,
+    title: `${segment.timeSegment} - ${cleanSummary} | טיול ליפן`,
   }
 }
