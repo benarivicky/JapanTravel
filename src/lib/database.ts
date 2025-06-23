@@ -11,11 +11,14 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
     const tripDocSnap = await getDoc(tripDocRef);
 
     if (tripDocSnap.exists()) {
+      console.log('Document found in Firestore. Data:', tripDocSnap.data());
       const data = tripDocSnap.data();
       // Assuming segments are stored in an array field named 'segments'
-      return (data.segments as TripSegment[]) || [];
+      const segments = (data.segments as TripSegment[]) || [];
+      console.log(`Successfully parsed ${segments.length} segments.`);
+      return segments;
     } else {
-      console.log('No such trip document!');
+      console.warn(`No document found in Firestore at path: trips/${tripId}`);
       return [];
     }
   } catch (error) {
