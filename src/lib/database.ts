@@ -29,7 +29,7 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
       const tripData = tripDocSnap.data();
       console.log('Trip data found in Firestore:', tripData);
       
-      const dailyItinerary = tripData.dailyItinerary;
+      const dailyItinerary = tripData.dailyItinerary || tripData.dailyitinerary;
       if (!Array.isArray(dailyItinerary)) {
         throw new Error("נתוני הטיול אינם תקינים: שדה 'dailyItinerary' חסר או אינו מערך.");
       }
@@ -37,7 +37,10 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
       const allSegments: TripSegment[] = [];
 
       dailyItinerary.forEach((day: any) => {
-        if (day.activities && Array.isArray(day.activities)) {
+        const date = day.Date || day.date;
+        const city = day.City || day.city;
+
+        if (day.activities && Array.isArray(day.activities) && date) {
           day.activities.forEach((activity: any, index: number) => {
             const timeSegment = getTimeSegment(index);
             
@@ -53,12 +56,12 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
             }
 
             const segment: TripSegment = {
-              id: `${day.Date}-${index}`,
+              id: `${date}-${index}`,
               tripId: tripId,
-              date: day.Date,
+              date: date,
               timeSegment: timeSegment.name,
               timeSegmentNumeric: timeSegment.numeric,
-              summary: `${timeSegment.name} ב${day.City || 'מיקום לא ידוע'}`,
+              summary: `${timeSegment.name} ב${city || 'מיקום לא ידוע'}`,
               detailedContent: activity.detailedContent || '<p>אין פירוט זמין.</p>',
               linkTitle: linkTitle,
               linkLink: linkLink,
