@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTripId } from '@/hooks/use-trip-id';
 import { useAuth } from '@/hooks/use-auth';
-import { getTripPlans } from '@/lib/database';
+import { getTripPlans, getTripCustomerName } from '@/lib/database';
 import type { TripDay } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -19,6 +19,7 @@ export default function TripPage() {
   const { tripId, loading: tripIdLoading, clearTripId } = useTripId();
   const { isAdmin, loading: authLoading } = useAuth();
   const [tripDays, setTripDays] = useState<TripDay[]>([]);
+  const [customerName, setCustomerName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +35,11 @@ export default function TripPage() {
         setLoading(true);
         setError(null);
         try {
-          const segments = await getTripPlans(tripId);
+          const [segments, name] = await Promise.all([
+            getTripPlans(tripId),
+            getTripCustomerName(tripId),
+          ]);
+          setCustomerName(name);
           
           if (segments.length === 0) {
             setError(`לא נמצאו נתוני טיול עבור מזהה "${tripId}". אנא ודא שהמסמך קיים ב-Firestore בנתיב "tripPlans/${tripId}" ומכיל מערך תקין בשם "dailyItinerary".`);
@@ -97,7 +102,7 @@ export default function TripPage() {
     <div className="container mx-auto py-8 px-4">
       <header className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-headline font-bold text-right text-foreground">
-          תוכנית הטיול
+          תוכנית הטיול {customerName && `- ${customerName}`}
         </h1>
         <div className="flex items-center gap-4">
           {isAdmin && (
