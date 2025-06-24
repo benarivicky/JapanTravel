@@ -1,8 +1,8 @@
-import { auth } from './firebase';
+import { auth, db } from './firebase';
 import { 
   signInWithEmailAndPassword as firebaseSignInWithEmailAndPassword,
-  AuthError,
 } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 export async function signInWithEmailAndPassword(email: string, password: string): Promise<{ success: boolean; tripId?: string; error?: string }> {
   console.log(`Attempting login for email: ${email}`);
@@ -13,9 +13,25 @@ export async function signInWithEmailAndPassword(email: string, password: string
     
     console.log("Login successful with Firebase for user:", user.uid);
 
-    // For this demo app, we'll always return the same tripId since we are using mock data.
-    // In a real app, this would come from a database.
-    return { success: true, tripId: '434' };
+    // Fetch tripId from user's document in Firestore
+    const userDocRef = doc(db, 'Users', user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+      const userData = userDocSnap.data();
+      const tripId = userData.tripId;
+      if (tripId) {
+        return { success: true, tripId: tripId };
+      } else {
+        return { success: false, error: 'Trip ID not found for this user.' };
+      }
+    } else {
+      // Fallback for original admin users or if document doesn't exist
+      if (email === 'benari_v@hotmail.com' || email === 'tokyosz.sigal@gmail.com') {
+          return { success: true, tripId: '434' };
+      }
+      return { success: false, error: 'User data not found.' };
+    }
 
   } catch (error) {
     console.error("Firebase login failed", error);

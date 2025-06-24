@@ -1,66 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import { uploadTripPlan } from './actions';
-
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Terminal, UploadCloud, CheckCircle } from 'lucide-react';
-import { Label } from '@/components/ui/label';
+import { Loader2, UserPlus, UploadCloud, ArrowLeft } from 'lucide-react';
 
-export default function AdminPage() {
+export default function AdminDashboardPage() {
   const router = useRouter();
   const { isAdmin, loading: authLoading } = useAuth();
-  
-  const [file, setFile] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string; tripId?: string } | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
       router.replace('/');
     }
   }, [isAdmin, authLoading, router]);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setFile(event.target.files[0]);
-      setResult(null);
-    }
-  };
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!file) {
-        setResult({ success: false, message: 'Please select a file to upload.' });
-        return;
-    }
-
-    setIsLoading(true);
-    setResult(null);
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const content = e.target?.result as string;
-      const uploadResult = await uploadTripPlan(content);
-      setResult(uploadResult);
-      setIsLoading(false);
-      if (uploadResult.success) {
-        const form = event.target as HTMLFormElement;
-        form.reset();
-        setFile(null);
-      }
-    };
-    reader.onerror = () => {
-        setResult({ success: false, message: 'Failed to read the file.' });
-        setIsLoading(false);
-    }
-    reader.readAsText(file);
-  };
   
   if (authLoading || !isAdmin) {
     return (
@@ -71,48 +27,46 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="container mx-auto max-w-2xl py-8 px-4">
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-3xl font-bold text-right">Admin: Upload Trip Plan</CardTitle>
-                <CardDescription className="text-right">
-                    Upload a JSON file to create or replace a trip plan in Firestore. The document ID will be the `TRIPID` from the file.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="trip-plan-file" className="text-right w-full block">JSON File</Label>
-                        <Input id="trip-plan-file" type="file" accept=".json" onChange={handleFileChange} />
-                    </div>
-                    
-                    <Button type="submit" className="w-full" disabled={isLoading || !file}>
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                                Uploading...
-                            </>
-                        ) : (
-                            <>
-                                <UploadCloud className="ml-2 h-4 w-4" />
-                                Upload File
-                            </>
-                        )}
+    <main className="container mx-auto max-w-4xl py-8 px-4">
+        <div className="flex justify-between items-center mb-8">
+            <h1 className="text-4xl font-headline font-bold text-right text-foreground">
+                Admin Dashboard
+            </h1>
+            <Button asChild variant="ghost">
+              <Link href="/trip" className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Trip
+              </Link>
+            </Button>
+        </div>
+        <div className="grid md:grid-cols-2 gap-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-2xl text-right justify-end"><UploadCloud /> Upload Trip Plan</CardTitle>
+                    <CardDescription className="text-right">
+                        Upload a JSON file to create or replace a trip plan.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild className="w-full">
+                        <Link href="/admin/upload">Go to Upload</Link>
                     </Button>
-                </form>
-
-                {result && (
-                    <Alert variant={result.success ? 'default' : 'destructive'} className="mt-6" dir="rtl">
-                        {result.success ? <CheckCircle className="h-4 w-4" /> : <Terminal className="h-4 w-4" />}
-                        <AlertTitle>{result.success ? 'Success' : 'Error'}</AlertTitle>
-                        <AlertDescription>
-                            {result.message}
-                            {result.success && result.tripId && ` Trip ID: ${result.tripId}`}
-                        </AlertDescription>
-                    </Alert>
-                )}
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-2xl text-right justify-end"><UserPlus /> Create New User</CardTitle>
+                    <CardDescription className="text-right">
+                        Create a new user account and assign a Trip ID.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild className="w-full">
+                        <Link href="/admin/new-user">Go to User Creation</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
     </main>
   );
 }
