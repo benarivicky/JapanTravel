@@ -22,7 +22,7 @@ const db = getFirestore(mainApp);
 const NewUserSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
-  tripId: z.string().nonempty({ message: 'Trip ID cannot be empty.' }),
+  TripId: z.string().nonempty({ message: 'Trip ID cannot be empty.' }),
 });
 
 export async function createNewUser(values: z.infer<typeof NewUserSchema>): Promise<{ success: boolean; message: string }> {
@@ -31,7 +31,7 @@ export async function createNewUser(values: z.infer<typeof NewUserSchema>): Prom
       return { success: false, message: validation.error.errors.map(e => e.message).join(', ') };
   }
   
-  const { email, password, tripId } = validation.data;
+  const { email, password, TripId } = validation.data;
 
   // Use a temporary app to create the user without affecting the admin's session.
   const tempAppName = `temp-user-creation-${Date.now()}`;
@@ -47,10 +47,10 @@ export async function createNewUser(values: z.infer<typeof NewUserSchema>): Prom
     // Step 2: Create user document in Firestore 'Users' collection.
     await setDoc(doc(db, 'Users', user.uid), {
       email: user.email,
-      tripId: tripId,
+      TripId: TripId,
     });
 
-    return { success: true, message: `Successfully created user ${email} with Trip ID ${tripId}.` };
+    return { success: true, message: `Successfully created user ${email} with Trip ID ${TripId}.` };
 
   } catch (error: any) {
     console.error('Error creating new user:', error);
