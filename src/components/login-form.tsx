@@ -44,7 +44,6 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     const result = await signInWithEmailAndPassword(values.email, values.password);
-    setIsLoading(false);
 
     if (result.success && result.tripId) {
       saveTripId(result.tripId);
@@ -59,6 +58,7 @@ export function LoginForm() {
         title: 'שגיאת התחברות',
         description: result.error || 'אירעה שגיאה לא צפויה.',
       });
+      setIsLoading(false);
     }
   }
 
