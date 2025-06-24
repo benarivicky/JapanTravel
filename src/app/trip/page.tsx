@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTripId } from '@/hooks/use-trip-id';
+import { useAuth } from '@/hooks/use-auth';
 import { getTripPlans } from '@/lib/database';
 import type { TripDay } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 export default function TripPage() {
   const router = useRouter();
   const { tripId, loading: tripIdLoading, clearTripId } = useTripId();
+  const { isAdmin, loading: authLoading } = useAuth();
   const [tripDays, setTripDays] = useState<TripDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export default function TripPage() {
     router.push('/');
   };
 
-  if (tripIdLoading || loading) {
+  if (tripIdLoading || loading || authLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -97,9 +99,16 @@ export default function TripPage() {
         <h1 className="text-4xl font-headline font-bold text-right text-foreground">
           תוכנית הטיול
         </h1>
-        <Button variant="outline" onClick={handleLogout}>
-          התנתק
-        </Button>
+        <div className="flex items-center gap-4">
+          {isAdmin && (
+            <Button asChild variant="secondary">
+              <Link href="/admin">Admin</Link>
+            </Button>
+          )}
+          <Button variant="outline" onClick={handleLogout}>
+            התנתק
+          </Button>
+        </div>
       </header>
       
       {error ? (
