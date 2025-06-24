@@ -4,6 +4,9 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
+const ADMIN_EMAILS = ['benari_v@hotmail.com', 'tokyosz.sigal@gmail.com'];
+const ADMIN_DEFAULT_TRIP_ID = '434';
+
 export async function signInWithEmailAndPassword(email: string, password: string): Promise<{ success: boolean; tripId?: string; error?: string }> {
   console.log(`Attempting login for email: ${email}`);
   
@@ -13,6 +16,13 @@ export async function signInWithEmailAndPassword(email: string, password: string
     
     console.log("Authentication successful for user:", user.uid);
 
+    // Immediately grant access if the user is an admin
+    if (ADMIN_EMAILS.includes(user.email || '')) {
+      console.log(`Admin user ${user.email} logged in. Granting access.`);
+      return { success: true, tripId: ADMIN_DEFAULT_TRIP_ID };
+    }
+
+    // For non-admin users, fetch their Trip ID from Firestore
     const userDocRef = doc(db, 'Users', user.uid);
     const userDocSnap = await getDoc(userDocRef);
 
@@ -22,13 +32,12 @@ export async function signInWithEmailAndPassword(email: string, password: string
       if (tripId) {
         return { success: true, tripId: tripId };
       } else {
-        return { success: false, error: 'Trip ID not found for this user.' };
+        // User document exists but has no Trip ID
+        return { success: false, error: 'לא נמצא מזהה טיול עבור משתמש זה.' };
       }
     } else {
-      if (email === 'benari_v@hotmail.com' || email === 'tokyosz.sigal@gmail.com') {
-          return { success: true, tripId: '434' };
-      }
-      return { success: false, error: 'User data not found.' };
+      // User document does not exist in Firestore
+      return { success: false, error: 'לא נמצאו נתוני משתמש.' };
     }
 
   } catch (error: any) {
