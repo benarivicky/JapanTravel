@@ -8,13 +8,19 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import Link from 'next/link';
 
-import { createNewUser, NewUserSchema } from './actions';
+import { createNewUser } from './actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Terminal, CheckCircle, ArrowLeft, UserPlus } from 'lucide-react';
+
+const NewUserSchema = z.object({
+  email: z.string().email({ message: 'Invalid email address.' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  tripId: z.string().nonempty({ message: 'Trip ID cannot be empty.' }),
+});
 
 export default function AdminNewUserPage() {
   const router = useRouter();

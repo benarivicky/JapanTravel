@@ -19,7 +19,7 @@ const firebaseConfig = {
 const mainApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(mainApp);
 
-export const NewUserSchema = z.object({
+const NewUserSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
   tripId: z.string().nonempty({ message: 'Trip ID cannot be empty.' }),
