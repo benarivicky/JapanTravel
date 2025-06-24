@@ -63,6 +63,28 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
   }
 }
 
+export async function getTripCustomerName(tripId: string): Promise<string | null> {
+  if (!tripId) {
+    console.error('No tripId provided to getTripCustomerName');
+    return null;
+  }
+  try {
+    const tripDocRef = doc(db, 'tripPlans', tripId);
+    const tripDocSnap = await getDoc(tripDocRef);
+    if (tripDocSnap.exists()) {
+      const tripData = tripDocSnap.data();
+      const customerName = tripData['Customer name'] || tripData.customerName || tripData.CustomerName;
+      if (typeof customerName === 'string' && customerName.trim() !== '') {
+        return customerName;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching customer name from Firestore:', error);
+    return null;
+  }
+}
+
 export async function getTripSegment(
   tripId: string,
   date: string,
