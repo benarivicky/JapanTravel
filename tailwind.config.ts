@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['"Fredoka"', 'sans-serif'],
-        headline: ['"Fredoka"', 'sans-serif'],
+        body: ['Calibri', 'sans-serif'],
+        headline: ['Calibri', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
