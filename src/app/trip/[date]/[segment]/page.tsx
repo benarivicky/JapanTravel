@@ -1,41 +1,101 @@
-import { getTripPlans, getTripSegment } from '@/lib/database';
-import { notFound } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, notFound, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTripId } from '@/hooks/use-trip-id';
+import { getTripPlans } from '@/lib/database';
+import type { TripSegment } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Loader2 } from 'lucide-react';
 
-interface DetailPageProps {
-  params: {
-    date: string;
-    segment: string;
-  };
-}
+export default function TripSegmentPage() {
+  const router = useRouter();
+  const params = useParams();
+  const { tripId, loading: tripIdLoading } = useTripId();
 
-export default async function TripSegmentPage({ params }: DetailPageProps) {
-  const segmentNumeric = parseInt(params.segment, 10);
-  if (isNaN(segmentNumeric)) {
-    notFound();
+  const [segment, setSegment] = useState<TripSegment | null>(null);
+  const [nextSegment, setNextSegment] = useState<TripSegment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const date = typeof params.date === 'string' ? params.date : '';
+  const segmentSlug = typeof params.segment === 'string' ? params.segment : '';
+  const segmentNumeric = parseInt(segmentSlug, 10);
+
+  useEffect(() => {
+    if (!tripIdLoading && !tripId) {
+      router.replace('/');
+    }
+  }, [tripId, tripIdLoading, router]);
+
+  useEffect(() => {
+    // Set document title when segment is loaded
+    if (segment) {
+      const cleanSummary = segment.summary.replace(/<[^>]*>?/gm, '');
+      document.title = `${segment.timeSegment} - ${cleanSummary} | טיול ליפן`;
+    }
+  }, [segment]);
+
+  useEffect(() => {
+    if (tripId && date && !isNaN(segmentNumeric)) {
+      const fetchSegment = async () => {
+        try {
+          setLoading(true);
+          const allSegments = await getTripPlans(tripId);
+          const dailySegments = allSegments
+            .filter((s) => s.date === date)
+            .sort((a, b) => a.timeSegmentNumeric - b.timeSegmentNumeric);
+          
+          const currentIndex = dailySegments.findIndex((s) => s.timeSegmentNumeric === segmentNumeric);
+
+          if (currentIndex === -1) {
+            notFound();
+            return;
+          }
+
+          const currentSegment = dailySegments[currentIndex];
+          setSegment(currentSegment);
+
+          const next = currentIndex < dailySegments.length - 1 ? dailySegments[currentIndex + 1] : null;
+          setNextSegment(next);
+
+        } catch (e: any) {
+          setError(e.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchSegment();
+    } else if (!tripIdLoading && (isNaN(segmentNumeric) || !date)) {
+      notFound();
+    }
+  }, [tripId, date, segmentNumeric, tripIdLoading]);
+
+
+  if (loading || tripIdLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  const allSegments = await getTripPlans('434');
-  const dailySegments = allSegments
-    .filter((s) => s.date === params.date)
-    .sort((a, b) => a.timeSegmentNumeric - b.timeSegmentNumeric);
+  if (error) {
+    // You could create a more specific error component
+    return (
+        <div className="flex h-screen items-center justify-center text-destructive">
+            Error: {error}
+        </div>
+    );
+  }
   
-  const currentIndex = dailySegments.findIndex((s) => s.timeSegmentNumeric === segmentNumeric);
-
-  if (currentIndex === -1) {
-    notFound();
-  }
-
-  const segment = dailySegments[currentIndex];
-  const nextSegment = currentIndex < dailySegments.length - 1 ? dailySegments[currentIndex + 1] : null;
-
   if (!segment) {
-    notFound();
+    // This will be caught by the notFound() in useEffect, but as a fallback
+    return notFound();
   }
-
+  
   const formattedDate = new Intl.DateTimeFormat('he-IL', {
     weekday: 'long',
     day: 'numeric',
@@ -101,22 +161,4 @@ export default async function TripSegmentPage({ params }: DetailPageProps) {
       </Card>
     </main>
   );
-}
-
-export async function generateMetadata({ params }: DetailPageProps) {
-  const segmentNumeric = parseInt(params.segment, 10);
-  if (isNaN(segmentNumeric)) {
-    return { title: 'פרטי טיול' }
-  }
-  const segment = await getTripSegment('434', params.date, segmentNumeric);
-
-  if (!segment) {
-    return { title: 'פרטי טיול' }
-  }
-
-  const cleanSummary = segment.summary.replace(/<[^>]*>?/gm, '');
-
-  return {
-    title: `${segment.timeSegment} - ${cleanSummary} | טיול ליפן`,
-  }
 }
