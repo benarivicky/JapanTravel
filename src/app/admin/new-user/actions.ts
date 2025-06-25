@@ -3,7 +3,6 @@
 import { initializeApp, getApp, getApps, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
-import { z } from 'zod';
 
 // Config from src/lib/firebase.ts
 const firebaseConfig = {
@@ -19,19 +18,12 @@ const firebaseConfig = {
 const mainApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(mainApp);
 
-const NewUserSchema = z.object({
-  email: z.string().email({ message: 'Invalid email address.' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
-  TripId: z.string().nonempty({ message: 'Trip ID cannot be empty.' }),
-});
 
-export async function createNewUser(values: z.infer<typeof NewUserSchema>): Promise<{ success: boolean; message: string }> {
-  const validation = NewUserSchema.safeParse(values);
-  if (!validation.success) {
-      return { success: false, message: validation.error.errors.map(e => e.message).join(', ') };
-  }
+// The schema and validation are now handled on the client-side page component.
+// This function receives the validated data.
+export async function createNewUser(values: { email: string; password: string; TripId: string; }): Promise<{ success: boolean; message: string }> {
   
-  const { email, password, TripId } = validation.data;
+  const { email, password, TripId } = values;
 
   // Use a temporary app to create the user without affecting the admin's session.
   const tempAppName = `temp-user-creation-${Date.now()}`;
