@@ -10,6 +10,35 @@ const ADMIN_DEFAULT_TRIP_ID = '434';
 export async function signInWithEmailAndPassword(email: string, password: string): Promise<{ success: boolean; tripId?: string; error?: string }> {
   console.log(`Attempting login for email: ${email}`);
   
+  // Handle admin users first
+  if (email === 'benari_v@hotmail.com' || email === 'tokyosz.sigal@gmail.com') {
+    try {
+      await firebaseSignInWithEmailAndPassword(auth, email, password);
+      return { success: true, tripId: '434' }; 
+    } catch (error) {
+      console.error("Firebase admin login failed", error);
+      let errorMessage = 'אירעה שגיאה לא צפויה.';
+      if (typeof error === 'object' && error !== null && 'code' in error) {
+          const authError = error as { code: string };
+          switch (authError.code) {
+              case 'auth/user-not-found':
+              case 'auth/wrong-password':
+              case 'auth/invalid-credential':
+                   errorMessage = 'אימייל או סיסמה שגויים';
+                   break;
+              case 'auth/invalid-email':
+                  errorMessage = 'כתובת אימייל לא תקינה.';
+                  break;
+              default:
+                  errorMessage = 'שגיאת התחברות. נסה שוב מאוחר יותר.';
+                  break;
+          }
+      }
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  // Handle regular users
   try {
     const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -28,7 +57,7 @@ export async function signInWithEmailAndPassword(email: string, password: string
 
     if (userDocSnap.exists()) {
       const userData = userDocSnap.data();
-      const tripId = userData.tripId;
+      const tripId = userData.tripId || userData.TripId; // Handle both 'tripId' and 'TripId'
       if (tripId) {
         return { success: true, tripId: tripId };
       } else {

@@ -19,7 +19,7 @@ import { Loader2, Terminal, CheckCircle, ArrowLeft, UserPlus } from 'lucide-reac
 const NewUserSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
-  tripId: z.string().nonempty({ message: 'Trip ID cannot be empty.' }),
+  TripId: z.string().nonempty({ message: 'Trip ID cannot be empty.' }),
 });
 
 export default function AdminNewUserPage() {
@@ -40,7 +40,7 @@ export default function AdminNewUserPage() {
     defaultValues: {
       email: '',
       password: '',
-      tripId: '',
+      TripId: '',
     },
   });
 
@@ -112,7 +112,7 @@ export default function AdminNewUserPage() {
                         />
                          <FormField
                             control={form.control}
-                            name="tripId"
+                            name="TripId"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-right w-full block">Trip ID</FormLabel>
