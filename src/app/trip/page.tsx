@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Loader2, Terminal } from 'lucide-react';
+import { Loader2, Terminal, ArrowRight } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export default function TripPage() {
@@ -112,6 +112,7 @@ export default function TripPage() {
             </Button>
           )}
           <Button variant="outline" onClick={handleLogout}>
+            <ArrowRight />
             התנתק
           </Button>
         </div>
