@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Loader2, Terminal, ArrowRight } from 'lucide-react';
+import { Loader2, Terminal, ArrowRight, BedDouble, MapPin } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export default function TripPage() {
@@ -135,6 +135,22 @@ export default function TripPage() {
                   <CardTitle className="text-right text-xl font-semibold">
                     {formattedDates[index]}
                   </CardTitle>
+                  {(day.segments[0]?.city || day.segments[0]?.hotelsDetails) && (
+                    <div className="text-muted-foreground text-right text-sm mt-1 flex justify-end items-center flex-wrap gap-x-4 gap-y-1">
+                      {day.segments[0].city && (
+                        <div className="flex items-center gap-1">
+                          <span>{day.segments[0].city}</span>
+                          <MapPin className="h-4 w-4" />
+                        </div>
+                      )}
+                      {day.segments[0].hotelsDetails && (
+                        <div className="flex items-center gap-1">
+                          <span>{day.segments[0].hotelsDetails}</span>
+                          <BedDouble className="h-4 w-4" />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent className="flex flex-col flex-grow">
                   <div className="flex-grow">
