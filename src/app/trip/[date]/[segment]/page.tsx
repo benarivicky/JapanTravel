@@ -8,7 +8,7 @@ import { getTripPlans } from '@/lib/database';
 import type { TripSegment } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Loader2, BedDouble, MapPin } from 'lucide-react';
 
 export default function TripSegmentPage() {
   const router = useRouter();
@@ -122,7 +122,25 @@ export default function TripSegmentPage() {
           <CardTitle className="text-3xl font-bold text-right">
             {segment.timeSegment} - {formattedDate}
           </CardTitle>
-          <div className="text-muted-foreground text-right text-lg" dangerouslySetInnerHTML={{ __html: segment.summary }} />
+          
+          {(segment.city || segment.hotelsDetails) && (
+            <div className="text-muted-foreground text-right text-base mt-2 flex justify-end items-center gap-4">
+              {segment.city && (
+                <div className="flex items-center gap-1">
+                  <span>{segment.city}</span>
+                  <MapPin className="h-4 w-4" />
+                </div>
+              )}
+              {segment.hotelsDetails && (
+                <div className="flex items-center gap-1">
+                  <span>{segment.hotelsDetails}</span>
+                  <BedDouble className="h-4 w-4" />
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="text-muted-foreground text-right text-lg pt-2" dangerouslySetInnerHTML={{ __html: segment.summary }} />
         </CardHeader>
         <CardContent>
           <div

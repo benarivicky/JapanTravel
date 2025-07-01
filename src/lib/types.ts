@@ -12,6 +12,8 @@ export interface TripSegment {
   summary: string;
   detailedContent: string; // HTML content
   externalLinks?: ExternalLink[];
+  city?: string;
+  hotelsDetails?: string;
 }
 
 export interface TripDay {

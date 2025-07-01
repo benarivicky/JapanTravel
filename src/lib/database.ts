@@ -27,6 +27,7 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
       dailyItinerary.forEach((day: any) => {
         const date = day.Date || day.date;
         const city = day.City || day.city;
+        const hotelsDetails = day.HotelsDetails || day.hotelsDetails;
 
         if (day.activities && Array.isArray(day.activities) && date) {
           day.activities.forEach((activity: any) => {
@@ -39,6 +40,8 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
               id: `${date}-${activity.timeSegmentNumeric}`,
               tripId: tripId,
               date: date,
+              city: city,
+              hotelsDetails: hotelsDetails,
               timeSegment: activity.timeSegment || 'פעילות',
               timeSegmentNumeric: activity.timeSegmentNumeric || 0,
               summary: activity.summary || `פעילות ב${city || 'מיקום לא ידוע'}`,
