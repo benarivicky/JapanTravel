@@ -5,7 +5,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore';
 
 const ADMIN_EMAILS = ['benari_v@hotmail.com', 'tokyosz.sigal@gmail.com'];
-const ADMIN_DEFAULT_TRIP_ID = '434';
+const ADMIN_DEFAULT_TRIP_ID = '373';
 
 export async function signInWithEmailAndPassword(email: string, password: string): Promise<{ success: boolean; tripId?: string; error?: string }> {
   try {
@@ -38,7 +38,8 @@ export async function signInWithEmailAndPassword(email: string, password: string
       return { success: false, error: 'לא נמצאו נתוני משתמש.' };
     }
 
-  } catch (error: any) {
+  } catch (error: any)
+{
     console.error("Firebase sign-in failed:", error);
     let errorMessage = 'אירעה שגיאה לא צפויה.';
     if (error.code) {
