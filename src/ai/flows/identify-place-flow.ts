@@ -30,9 +30,10 @@ export async function identifyPlace(input: IdentifyPlaceInput): Promise<Identify
 
 const prompt = ai.definePrompt({
   name: 'identifyPlacePrompt',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: IdentifyPlaceInputSchema},
   output: {schema: IdentifyPlaceOutputSchema},
-  prompt: `You are an expert historian and architectural specialist. Analyze the provided image of a historical site or building.
+  system: `You are an expert historian and architectural specialist. Analyze the provided image of a historical site or building.
 Provide a detailed description covering the following aspects:
 1.  **Historical Background:** Key events, figures, and eras associated with the place.
 2.  **Architectural Style:** Identify the style and describe its key features.
@@ -40,9 +41,8 @@ Provide a detailed description covering the following aspects:
 
 **IMPORTANT INSTRUCTIONS:**
 - Your entire response MUST be in Hebrew.
-- However, you MUST keep specific, internationally recognized proper names or specialized terms in their original English. For example: "Gothic", "Byzantine", "World War II", "Art Deco", "Shogun".
-
-Analyze this image: {{media url=photoDataUri}}`,
+- However, you MUST keep specific, internationally recognized proper names or specialized terms in their original English. For example: "Gothic", "Byzantine", "World War II", "Art Deco", "Shogun".`,
+  prompt: `Analyze this image: {{media url=photoDataUri}}`,
 });
 
 const identifyPlaceFlow = ai.defineFlow(
