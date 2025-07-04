@@ -102,14 +102,14 @@ export default function TripPage() {
   return (
     <div className="container mx-auto py-8 px-4">
       <header className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-headline font-bold text-right text-foreground">
+        <h1 className="text-4xl font-headline font-bold text-right text-foreground">
           תוכנית הטיול{customerName ? ` - ${customerName}` : ''}
         </h1>
         <div className="flex items-center gap-4">
           <Button asChild variant="outline">
             <Link href="/trip/identify" className="flex items-center gap-2">
               <Camera />
-              Place by Picture
+              צילום
             </Link>
           </Button>
           {isAdmin && (
