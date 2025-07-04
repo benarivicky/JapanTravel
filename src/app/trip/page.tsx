@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Loader2, Terminal, ArrowRight, BedDouble, MapPin } from 'lucide-react';
+import { Loader2, Terminal, ArrowRight, BedDouble, MapPin, Camera } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export default function TripPage() {
@@ -106,6 +106,12 @@ export default function TripPage() {
           תוכנית הטיול{customerName ? ` - ${customerName}` : ''}
         </h1>
         <div className="flex items-center gap-4">
+          <Button asChild variant="outline">
+            <Link href="/trip/identify" className="flex items-center gap-2">
+              <Camera />
+              Place by Picture
+            </Link>
+          </Button>
           {isAdmin && (
             <Button asChild variant="secondary">
               <Link href="/admin">Admin</Link>
