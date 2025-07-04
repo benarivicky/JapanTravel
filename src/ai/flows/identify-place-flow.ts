@@ -30,7 +30,7 @@ export async function identifyPlace(input: IdentifyPlaceInput): Promise<Identify
 
 const prompt = ai.definePrompt({
   name: 'identifyPlacePrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-pro-latest',
   input: {schema: IdentifyPlaceInputSchema},
   output: {schema: IdentifyPlaceOutputSchema},
   system: `You are an expert historian and architectural specialist. Analyze the provided image of a historical site or building.
