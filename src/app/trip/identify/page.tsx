@@ -116,48 +116,49 @@ export default function PictureIdentificationPage() {
       );
     }
     
-    if (analysisResult) {
-      return (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">תוצאות הזיהוי</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {capturedImage && <Image src={capturedImage} alt="Captured site" width={600} height={400} className="rounded-md mb-4 w-full h-auto" />}
-              <ScrollArea className="h-60 w-full rounded-md border p-4">
-                 <p className="text-right whitespace-pre-wrap">{analysisResult.description}</p>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-          <Button onClick={handleRetake} className="w-full">
-            <RefreshCw />
-            Retake Picture
-          </Button>
-        </div>
-      );
-    }
-
-    if (isLoading && capturedImage) {
-      return (
-        <div className="relative">
-          <Image src={capturedImage} alt="Captured site for analysis" width={600} height={400} className="rounded-md w-full h-auto blur-sm" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-md">
-            <Loader2 className="h-12 w-12 animate-spin text-white" />
-            <p className="text-white mt-4 text-lg">מנתח את התמונה...</p>
-          </div>
-        </div>
-      );
-    }
-
     return (
-      <div className="space-y-4">
-        <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay muted playsInline />
-        <Button onClick={handleCapture} className="w-full" disabled={isLoading}>
-          <Camera />
-          {isLoading ? 'Processing...' : 'Take a Picture'}
-        </Button>
-        <canvas ref={canvasRef} className="hidden" />
+      <div>
+        {/* Camera View: Hidden if an image is captured or results are shown */}
+        <div className={`space-y-4 ${capturedImage || analysisResult ? 'hidden' : 'block'}`}>
+          <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay muted playsInline />
+          <Button onClick={handleCapture} className="w-full">
+            <Camera />
+            Take a Picture
+          </Button>
+          <canvas ref={canvasRef} className="hidden" />
+        </div>
+        
+        {/* Loading View: Shown while AI is processing */}
+        {isLoading && capturedImage && (
+            <div className="relative">
+              <Image src={capturedImage} alt="Captured site for analysis" width={600} height={400} className="rounded-md w-full h-auto blur-sm" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-md">
+                <Loader2 className="h-12 w-12 animate-spin text-white" />
+                <p className="text-white mt-4 text-lg">מנתח את התמונה...</p>
+              </div>
+            </div>
+        )}
+        
+        {/* Result View: Shown when analysis is complete */}
+        {analysisResult && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-right">תוצאות הזיהוי</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {capturedImage && <Image src={capturedImage} alt="Captured site" width={600} height={400} className="rounded-md mb-4 w-full h-auto" />}
+                <ScrollArea className="h-60 w-full rounded-md border p-4">
+                   <p className="text-right whitespace-pre-wrap">{analysisResult.description}</p>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+            <Button onClick={handleRetake} className="w-full">
+              <RefreshCw />
+              Retake Picture
+            </Button>
+          </div>
+        )}
       </div>
     );
   };
