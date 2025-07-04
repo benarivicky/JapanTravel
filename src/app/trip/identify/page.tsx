@@ -27,10 +27,13 @@ export default function PictureIdentificationPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    let stream: MediaStream | null = null;
+    
     const getCameraPermission = async () => {
-      if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
+      // Only get camera if we don't have an image yet.
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices && !capturedImage) {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
           setHasCameraPermission(true);
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -40,20 +43,21 @@ export default function PictureIdentificationPage() {
           setHasCameraPermission(false);
           setError('Camera access was denied. Please enable camera permissions in your browser settings.');
         }
-      } else {
+      } else if (!navigator.mediaDevices) {
         setHasCameraPermission(false);
         setError('Camera access is not supported by this browser.');
       }
     };
+    
     getCameraPermission();
 
+    // Cleanup function to stop the stream.
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [capturedImage]); // This effect re-runs when `capturedImage` is cleared, re-enabling the camera.
 
   const handleCapture = async () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -106,61 +110,86 @@ export default function PictureIdentificationPage() {
       );
     }
     
-    if (!hasCameraPermission) {
+    if (!hasCameraPermission && error) {
       return (
         <Alert variant="destructive" dir="rtl">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>שגיאת מצלמה</AlertTitle>
-          <AlertDescription>{error || 'Unable to access camera.'}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       );
     }
     
-    return (
-      <div>
-        {/* Camera View: Hidden if an image is captured or results are shown */}
-        <div className={`space-y-4 ${capturedImage || analysisResult ? 'hidden' : 'block'}`}>
+    // STATE 1: CAMERA VIEW
+    if (!capturedImage) {
+      return (
+        <div className="space-y-4">
           <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay muted playsInline />
           <Button onClick={handleCapture} className="w-full">
             <Camera />
-            Take a Picture
+            צלם תמונה
           </Button>
           <canvas ref={canvasRef} className="hidden" />
         </div>
-        
-        {/* Loading View: Shown while AI is processing */}
-        {isLoading && capturedImage && (
-            <div className="relative">
-              <Image src={capturedImage} alt="Captured site for analysis" width={600} height={400} className="rounded-md w-full h-auto blur-sm" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-md">
-                <Loader2 className="h-12 w-12 animate-spin text-white" />
-                <p className="text-white mt-4 text-lg">מנתח את התמונה...</p>
-              </div>
-            </div>
-        )}
-        
-        {/* Result View: Shown when analysis is complete */}
-        {analysisResult && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-right">תוצאות הזיהוי</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {capturedImage && <Image src={capturedImage} alt="Captured site" width={600} height={400} className="rounded-md mb-4 w-full h-auto" />}
-                <ScrollArea className="h-60 w-full rounded-md border p-4">
-                   <p className="text-right whitespace-pre-wrap">{analysisResult.description}</p>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-            <Button onClick={handleRetake} className="w-full">
-              <RefreshCw />
-              Retake Picture
-            </Button>
+      );
+    }
+
+    // STATE 2: LOADING VIEW
+    if (isLoading) {
+      return (
+        <div className="relative">
+          <Image src={capturedImage} alt="Captured site for analysis" width={600} height={400} className="rounded-md w-full h-auto blur-sm" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-md">
+            <Loader2 className="h-12 w-12 animate-spin text-white" />
+            <p className="text-white mt-4 text-lg">מנתח את התמונה...</p>
           </div>
-        )}
-      </div>
-    );
+        </div>
+      );
+    }
+
+    // STATE 4: ERROR VIEW (checked before success view)
+    if (error && !analysisResult) {
+        return (
+            <div className="space-y-4">
+                <Image src={capturedImage} alt="Captured site with error" width={600} height={400} className="rounded-md w-full h-auto" />
+                 <Alert variant="destructive" dir="rtl">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>שגיאת ניתוח</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+                <Button onClick={handleRetake} className="w-full">
+                    <RefreshCw />
+                    צלם תמונה חדשה
+                </Button>
+            </div>
+        )
+    }
+
+    // STATE 3: RESULT VIEW
+    if (analysisResult) {
+      return (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-right">תוצאות הזיהוי</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Image src={capturedImage} alt="Captured site" width={600} height={400} className="rounded-md mb-4 w-full h-auto" />
+              <ScrollArea className="h-60 w-full rounded-md border p-4">
+                 <p className="text-right whitespace-pre-wrap">{analysisResult.description}</p>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+          <Button onClick={handleRetake} className="w-full">
+            <RefreshCw />
+            צלם תמונה חדשה
+          </Button>
+        </div>
+      );
+    }
+
+    // Fallback, should not be reached
+    return null;
   };
 
   return (
