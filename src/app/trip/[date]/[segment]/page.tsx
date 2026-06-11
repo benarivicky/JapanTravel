@@ -16,7 +16,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { ArrowLeft, ArrowRight, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { LinkPreview } from '@/components/link-preview';
 
 export default function TripSegmentPage() {
   const router = useRouter();
@@ -162,19 +163,11 @@ export default function TripSegmentPage() {
             {segment.externalLinks && segment.externalLinks.length > 0 && (
               <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <h4 className="text-lg font-semibold text-right text-slate-800 mb-4">קישורים שימושיים</h4>
-                <ul className="list-none p-0 space-y-3">
+                <ul className="list-none p-0 space-y-4">
                   {segment.externalLinks.map((link, index) => (
                     link.linkLink && link.linkTitle && (
                       <li key={index}>
-                        <a
-                          href={link.linkLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-end gap-3 rounded-xl bg-white border border-slate-200 px-5 py-4 text-base font-medium text-blue-800 hover:bg-blue-50 hover:border-blue-300 active:bg-blue-100 transition-colors min-h-[56px]"
-                        >
-                          {link.linkTitle}
-                          <ExternalLink className="h-5 w-5 shrink-0" />
-                        </a>
+                        <LinkPreview href={link.linkLink} title={link.linkTitle} />
                       </li>
                     )
                   ))}
