@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -14,7 +13,6 @@ import { identifyPlace, type IdentifyPlaceOutput } from '@/ai/flows/identify-pla
 import { Loader2, Camera, ArrowLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 
 export default function PictureIdentificationPage() {
-  const router = useRouter();
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);

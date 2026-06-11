@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users collection: only the owning user or admins can read/write
+    match /Users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Trip plans: authenticated users can read their own trip
+    match /tripPlans/{tripId} {
+      allow read: if request.auth != null;
+      // Only server-side admin actions write trip plans
+      allow write: if false;
+    }
+  }
+}

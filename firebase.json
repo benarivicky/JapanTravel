@@ -1,0 +1,12 @@
+{
+  "apphosting": [
+    {
+      "backendId": "japantravel",
+      "root": "/"
+    }
+  ],
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

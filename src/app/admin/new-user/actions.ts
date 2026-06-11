@@ -4,17 +4,15 @@ import { initializeApp, getApp, getApps, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
-// Config from src/lib/firebase.ts
 const firebaseConfig = {
-  apiKey: "AIzaSyCT81UBSC9sz3F8awSN14xyLWGs_VreOrc",
-  authDomain: "japantravelplanners-d2992.firebaseapp.com",
-  projectId: "japantravelplanners-d2992",
-  storageBucket: "japantravelplanners-d2992.firebasestorage.app",
-  messagingSenderId: "74401408081",
-  appId: "1:74401408081:web:b800d86167f5962ac3c470"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Use the main app's Firestore instance
 const mainApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(mainApp);
 
