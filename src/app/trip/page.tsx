@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTripId } from '@/hooks/use-trip-id';
@@ -22,6 +22,10 @@ export default function TripPage() {
   const [customerName, setCustomerName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeDate, setActiveDate] = useState<string | null>(null);
+
+  // Refs: one per card, keyed by date
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (!tripIdLoading && !tripId) {
@@ -39,41 +43,69 @@ export default function TripPage() {
             getTripPlans(tripId),
             getTripCustomerName(tripId),
           ]);
-          
+
           setCustomerName(name);
-          
+
           if (segments.length === 0) {
             setError(`לא נמצאו נתוני טיול עבור מזהה "${tripId}". אנא ודא שהמסמך קיים ב-Firestore בנתיב "tripPlans/${tripId}" ומכיל מערך תקין בשם "dailyItinerary".`);
             setTripDays([]);
           } else {
             const groupedByDate = segments.reduce((acc, segment) => {
               const date = segment.date;
-              if (!acc[date]) {
-                acc[date] = [];
-              }
+              if (!acc[date]) acc[date] = [];
               acc[date].push(segment);
               return acc;
             }, {} as Record<string, typeof segments>);
 
             const days: TripDay[] = Object.entries(groupedByDate)
-              .map(([date, segments]) => ({
+              .map(([date, segs]) => ({
                 date,
-                segments: segments.sort((a, b) => a.timeSegmentNumeric - b.timeSegmentNumeric),
+                segments: segs.sort((a, b) => a.timeSegmentNumeric - b.timeSegmentNumeric),
               }))
-              .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
             setTripDays(days);
           }
-        } catch (e: any) {
-            setError(`אירעה שגיאה בטעינת הטיול. ייתכן שיש בעיית הרשאות ב-Firestore או שהנתונים אינם תקינים. שגיאה: ${e.message}`);
-            console.error(e);
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e);
+          setError(`אירעה שגיאה בטעינת הטיול. ייתכן שיש בעיית הרשאות ב-Firestore או שהנתונים אינם תקינים. שגיאה: ${msg}`);
+          console.error(e);
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
       };
       fetchTripData();
     }
   }, [tripId]);
+
+  // Scroll the targeted date card into the center of the viewport.
+  // Called after cards are rendered (tripDays dependency ensures the refs exist).
+  const scrollToDate = useCallback((date: string) => {
+    const card = cardRefs.current[date];
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    setActiveDate(date);
+    // Clear the highlight after 2.5 s so it doesn't stay forever
+    setTimeout(() => setActiveDate(null), 2500);
+  }, []);
+
+  // Detect URL hash on load and on hash-change (e.g. pressing browser back)
+  useEffect(() => {
+    if (tripDays.length === 0) return;
+
+    const handleHash = () => {
+      const date = window.location.hash.slice(1); // strip leading #
+      if (date) scrollToDate(date);
+    };
+
+    // Small delay ensures card DOM nodes are fully painted before scrolling
+    const timer = setTimeout(handleHash, 80);
+    window.addEventListener('hashchange', handleHash);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('hashchange', handleHash);
+    };
+  }, [tripDays, scrollToDate]);
 
   const formattedDates = useMemo(() => {
     return tripDays.map(day => {
@@ -83,8 +115,8 @@ export default function TripPage() {
         day: 'numeric',
         month: 'long',
       }).format(date);
-    })
-  }, [tripDays])
+    });
+  }, [tripDays]);
 
   const handleLogout = () => {
     clearTripId();
@@ -123,58 +155,75 @@ export default function TripPage() {
           </Button>
         </div>
       </header>
-      
+
       {error ? (
         <Alert variant="destructive" dir="rtl">
           <Terminal className="h-4 w-4" />
           <AlertTitle>שגיאה בטעינת הטיול</AlertTitle>
-          <AlertDescription>
-            {error}
-          </AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : (
         <ScrollArea className="w-full whitespace-nowrap rounded-lg border">
           <div className="flex w-max space-x-4 space-x-reverse p-4">
-            {tripDays.map((day, index) => (
-              <Card key={day.date} className="w-[350px] flex flex-col">
-                <CardHeader>
-                  <CardTitle className="text-right text-xl font-semibold">
-                    {formattedDates[index]}
-                  </CardTitle>
-                  {(day.segments[0]?.city || day.segments[0]?.hotelsDetails) && (
-                    <div className="text-muted-foreground text-right text-sm mt-1 flex justify-end items-center flex-wrap gap-x-4 gap-y-1">
-                      {day.segments[0].city && (
-                        <div className="flex items-center gap-1">
-                          <span>{day.segments[0].city}</span>
-                          <MapPin className="h-4 w-4" />
+            {tripDays.map((day, index) => {
+              const isActive = activeDate === day.date;
+              return (
+                <div
+                  key={day.date}
+                  ref={el => { cardRefs.current[day.date] = el; }}
+                  className="w-[350px] flex flex-col"
+                >
+                  <Card
+                    className={[
+                      'flex flex-col h-full transition-all duration-300',
+                      isActive
+                        ? 'ring-2 ring-primary shadow-lg scale-[1.02]'
+                        : '',
+                    ].join(' ')}
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-right text-xl font-semibold">
+                        {formattedDates[index]}
+                      </CardTitle>
+                      {(day.segments[0]?.city || day.segments[0]?.hotelsDetails) && (
+                        <div className="text-muted-foreground text-right text-sm mt-1 flex justify-end items-center flex-wrap gap-x-4 gap-y-1">
+                          {day.segments[0].city && (
+                            <div className="flex items-center gap-1">
+                              <span>{day.segments[0].city}</span>
+                              <MapPin className="h-4 w-4" />
+                            </div>
+                          )}
+                          {day.segments[0].hotelsDetails && (
+                            <div className="flex items-center gap-1">
+                              <span>{day.segments[0].hotelsDetails}</span>
+                              <BedDouble className="h-4 w-4" />
+                            </div>
+                          )}
                         </div>
                       )}
-                      {day.segments[0].hotelsDetails && (
-                        <div className="flex items-center gap-1">
-                          <span>{day.segments[0].hotelsDetails}</span>
-                          <BedDouble className="h-4 w-4" />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent className="flex flex-col flex-grow">
-                  <div className="flex-grow">
-                    {day.segments.map((segment, segIndex) => (
-                      <div key={segment.id}>
-                        <Link href={`/trip/${segment.date}/${segment.timeSegmentNumeric}`} passHref>
-                          <div className="block p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors">
-                            <h4 className="font-bold text-right">{segment.timeSegment}</h4>
-                            <div className="text-muted-foreground text-right whitespace-normal" dangerouslySetInnerHTML={{ __html: segment.summary }}></div>
+                    </CardHeader>
+                    <CardContent className="flex flex-col flex-grow">
+                      <div className="flex-grow">
+                        {day.segments.map((segment, segIndex) => (
+                          <div key={segment.id}>
+                            <Link href={`/trip/${segment.date}/${segment.timeSegmentNumeric}`} passHref>
+                              <div className="block p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors">
+                                <h4 className="font-bold text-right">{segment.timeSegment}</h4>
+                                <div
+                                  className="text-muted-foreground text-right whitespace-normal"
+                                  dangerouslySetInnerHTML={{ __html: segment.summary }}
+                                />
+                              </div>
+                            </Link>
+                            {segIndex < day.segments.length - 1 && <Separator />}
                           </div>
-                        </Link>
-                        {segIndex < day.segments.length - 1 && <Separator />}
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })}
           </div>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>

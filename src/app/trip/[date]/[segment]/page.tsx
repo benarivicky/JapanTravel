@@ -127,7 +127,7 @@ export default function TripSegmentPage() {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/trip">{formattedDate}</Link>
+                <Link href={`/trip#${segment.date}`}>{formattedDate}</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
