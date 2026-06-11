@@ -78,32 +78,46 @@ export default function TripPage() {
     }
   }, [tripId]);
 
-  // Scroll the targeted date card into the center of the viewport.
-  // Called after cards are rendered (tripDays dependency ensures the refs exist).
+  // Scroll the targeted date card into the center of the Radix ScrollArea viewport.
+  // scrollIntoView() doesn't work inside Radix ScrollArea because it uses a custom
+  // scroll container — we must find the viewport element and set scrollLeft manually.
   const scrollToDate = useCallback((date: string) => {
     const card = cardRefs.current[date];
     if (!card) return;
-    card.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+    // The Radix ScrollArea viewport is the nearest scrollable ancestor and carries
+    // a data-radix-scroll-area-viewport attribute.
+    const viewport = card.closest<HTMLElement>('[data-radix-scroll-area-viewport]');
+    if (viewport) {
+      // getBoundingClientRect gives positions relative to the visual viewport,
+      // so this works regardless of DOM nesting inside Radix ScrollArea.
+      const cardRect = card.getBoundingClientRect();
+      const vpRect = viewport.getBoundingClientRect();
+      const targetLeft =
+        viewport.scrollLeft + cardRect.left - vpRect.left - viewport.clientWidth / 2 + card.offsetWidth / 2;
+      viewport.scrollTo({ left: targetLeft, behavior: 'smooth' });
+    }
+
     setActiveDate(date);
-    // Clear the highlight after 2.5 s so it doesn't stay forever
-    setTimeout(() => setActiveDate(null), 2500);
+    setTimeout(() => setActiveDate(null), 3000);
   }, []);
 
-  // Detect URL hash on load and on hash-change (e.g. pressing browser back)
+  // Detect URL hash on load and on hash-change (browser back/forward).
   useEffect(() => {
     if (tripDays.length === 0) return;
 
-    const handleHash = () => {
+    const run = () => {
       const date = window.location.hash.slice(1); // strip leading #
       if (date) scrollToDate(date);
     };
 
-    // Small delay ensures card DOM nodes are fully painted before scrolling
-    const timer = setTimeout(handleHash, 80);
-    window.addEventListener('hashchange', handleHash);
+    // requestAnimationFrame inside setTimeout: first waits for React paint, then
+    // waits for the browser layout pass so offsetLeft values are stable.
+    const timer = setTimeout(() => requestAnimationFrame(run), 50);
+    window.addEventListener('hashchange', run);
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('hashchange', handleHash);
+      window.removeEventListener('hashchange', run);
     };
   }, [tripDays, scrollToDate]);
 
@@ -175,10 +189,10 @@ export default function TripPage() {
                 >
                   <Card
                     className={[
-                      'flex flex-col h-full transition-all duration-300',
+                      'flex flex-col h-full transition-all duration-500',
                       isActive
-                        ? 'ring-2 ring-primary shadow-lg scale-[1.02]'
-                        : '',
+                        ? 'ring-4 ring-offset-2 ring-indigo-500 shadow-xl shadow-indigo-300/60 scale-[1.05] bg-indigo-50/40'
+                        : 'shadow-sm',
                     ].join(' ')}
                   >
                     <CardHeader>
@@ -206,7 +220,11 @@ export default function TripPage() {
                       <div className="flex-grow">
                         {day.segments.map((segment, segIndex) => (
                           <div key={segment.id}>
-                            <Link href={`/trip/${segment.date}/${segment.timeSegmentNumeric}`} passHref>
+                            <Link
+                              href={`/trip/${segment.date}/${segment.timeSegmentNumeric}`}
+                              onClick={() => history.replaceState(null, '', `#${day.date}`)}
+                              passHref
+                            >
                               <div className="block p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors">
                                 <h4 className="font-bold text-right">{segment.timeSegment}</h4>
                                 <div
