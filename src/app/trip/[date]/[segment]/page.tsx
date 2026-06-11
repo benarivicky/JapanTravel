@@ -8,6 +8,14 @@ import { getTripPlans } from '@/lib/database';
 import type { TripSegment } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { ArrowLeft, ArrowRight, ExternalLink, Loader2 } from 'lucide-react';
 
 export default function TripSegmentPage() {
@@ -108,13 +116,26 @@ export default function TripSegmentPage() {
 
   return (
     <main className="container mx-auto max-w-4xl py-8 px-4">
-      <div className="mb-8">
-        <Button asChild variant="ghost">
-          <Link href="/trip" className="flex items-center gap-2">
-            <ArrowRight className="h-4 w-4" />
-            חזרה לתוכנית הטיול
-          </Link>
-        </Button>
+      <div className="mb-6" data-testid="breadcrumb-nav">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/trip">תוכנית הטיול</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/trip">{formattedDate}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{segment.timeSegment}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
       </div>
 
       <Card>
