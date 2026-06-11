@@ -8,7 +8,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { getTripPlans, getTripCustomerName } from '@/lib/database';
 import type { TripDay } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Loader2, Terminal, ArrowRight, BedDouble, MapPin, Camera } from 'lucide-react';
@@ -24,7 +23,6 @@ export default function TripPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeDate, setActiveDate] = useState<string | null>(null);
 
-  // Refs: one per card, keyed by date
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -78,41 +76,23 @@ export default function TripPage() {
     }
   }, [tripId]);
 
-  // Scroll the targeted date card into the center of the Radix ScrollArea viewport.
-  // scrollIntoView() doesn't work inside Radix ScrollArea because it uses a custom
-  // scroll container — we must find the viewport element and set scrollLeft manually.
+  // Grid layout scrolls naturally — scrollIntoView works without any Radix workaround.
   const scrollToDate = useCallback((date: string) => {
     const card = cardRefs.current[date];
     if (!card) return;
-
-    // The Radix ScrollArea viewport is the nearest scrollable ancestor and carries
-    // a data-radix-scroll-area-viewport attribute.
-    const viewport = card.closest<HTMLElement>('[data-radix-scroll-area-viewport]');
-    if (viewport) {
-      // getBoundingClientRect gives positions relative to the visual viewport,
-      // so this works regardless of DOM nesting inside Radix ScrollArea.
-      const cardRect = card.getBoundingClientRect();
-      const vpRect = viewport.getBoundingClientRect();
-      const targetLeft =
-        viewport.scrollLeft + cardRect.left - vpRect.left - viewport.clientWidth / 2 + card.offsetWidth / 2;
-      viewport.scrollTo({ left: targetLeft, behavior: 'smooth' });
-    }
-
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setActiveDate(date);
     setTimeout(() => setActiveDate(null), 3000);
   }, []);
 
-  // Detect URL hash on load and on hash-change (browser back/forward).
   useEffect(() => {
     if (tripDays.length === 0) return;
 
     const run = () => {
-      const date = window.location.hash.slice(1); // strip leading #
+      const date = window.location.hash.slice(1);
       if (date) scrollToDate(date);
     };
 
-    // requestAnimationFrame inside setTimeout: first waits for React paint, then
-    // waits for the browser layout pass so offsetLeft values are stable.
     const timer = setTimeout(() => requestAnimationFrame(run), 50);
     window.addEventListener('hashchange', run);
     return () => {
@@ -146,112 +126,115 @@ export default function TripPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <header className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-headline font-bold text-right text-foreground">
-          תוכנית הטיול{customerName ? ` - ${customerName}` : ''}
-        </h1>
-        <div className="flex items-center gap-4">
-          <Button asChild variant="outline">
-            <Link href="/trip/identify" className="flex items-center gap-2">
-              <Camera />
-              צילום
-            </Link>
-          </Button>
-          {isAdmin && (
-            <Button asChild variant="secondary">
-              <Link href="/admin">Admin</Link>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-headline font-bold text-right text-foreground leading-tight">
+            תוכנית הטיול{customerName ? ` — ${customerName}` : ''}
+          </h1>
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+            <Button asChild variant="outline" className="h-11 px-4 text-base gap-2">
+              <Link href="/trip/identify">
+                <Camera className="h-5 w-5" />
+                <span className="hidden sm:inline">צילום</span>
+              </Link>
             </Button>
-          )}
-          <Button variant="outline" onClick={handleLogout}>
-            <ArrowRight />
-            התנתק
-          </Button>
+            {isAdmin && (
+              <Button asChild variant="secondary" className="h-11 px-4 text-base">
+                <Link href="/admin">Admin</Link>
+              </Button>
+            )}
+            <Button variant="outline" onClick={handleLogout} className="h-11 px-4 text-base gap-2">
+              <ArrowRight className="h-5 w-5" />
+              <span className="hidden sm:inline">התנתק</span>
+            </Button>
+          </div>
         </div>
       </header>
 
-      {error ? (
-        <Alert variant="destructive" dir="rtl">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>שגיאה בטעינת הטיול</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : (
-        <ScrollArea className="w-full whitespace-nowrap rounded-lg border">
-          <div className="flex w-max space-x-4 space-x-reverse p-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {error ? (
+          <Alert variant="destructive" dir="rtl">
+            <Terminal className="h-5 w-5" />
+            <AlertTitle>שגיאה בטעינת הטיול</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : (
+          /* Responsive grid: 1 col phone → 2 col tablet → 3 col desktop.
+             Cards fill equal width at every breakpoint ("averaged" tiles). */
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
             {tripDays.map((day, index) => {
               const isActive = activeDate === day.date;
               return (
                 <div
                   key={day.date}
                   ref={el => { cardRefs.current[day.date] = el; }}
-                  className="w-[350px] flex flex-col"
                 >
                   <Card
                     className={[
                       'flex flex-col h-full transition-all duration-500 overflow-hidden',
                       isActive
-                        ? 'ring-4 ring-offset-2 ring-indigo-500 shadow-xl shadow-indigo-300/60 scale-[1.05]'
-                        : 'shadow-sm hover:shadow-md',
+                        ? 'ring-4 ring-offset-2 ring-indigo-500 shadow-2xl shadow-indigo-400/40 scale-[1.02]'
+                        : 'shadow-sm hover:shadow-lg hover:-translate-y-0.5',
                     ].join(' ')}
                   >
-                    {/* Gradient header */}
-                    <CardHeader className="bg-gradient-to-l from-blue-50 to-indigo-100 pb-3 rounded-t-lg">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="shrink-0 text-xs font-semibold bg-indigo-500 text-white rounded-full px-2.5 py-1">
+                    {/* Deep navy gradient header — premium, high-contrast */}
+                    <CardHeader className="bg-gradient-to-l from-slate-700 to-blue-900 text-white pb-4 rounded-t-xl">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="shrink-0 text-sm font-bold bg-amber-400 text-slate-900 rounded-full px-3 py-1">
                           יום {index + 1}
                         </span>
-                        <CardTitle className="text-right text-lg font-semibold leading-snug">
+                        <CardTitle className="text-right text-xl font-bold text-white leading-snug">
                           {formattedDates[index]}
                         </CardTitle>
                       </div>
                       {(day.segments[0]?.city || day.segments[0]?.hotelsDetails) && (
-                        <div className="flex justify-end flex-wrap gap-1.5 mt-2">
+                        <div className="flex justify-end flex-wrap gap-2 mt-3">
                           {day.segments[0].city && (
-                            <span className="inline-flex items-center gap-1 text-xs bg-white/70 text-indigo-700 rounded-full px-2.5 py-1 border border-indigo-200">
-                              <MapPin className="h-3 w-3" />
+                            <span className="inline-flex items-center gap-1.5 text-sm bg-white/15 text-white rounded-full px-3 py-1 border border-white/25">
+                              <MapPin className="h-4 w-4 shrink-0" />
                               {day.segments[0].city}
                             </span>
                           )}
                           {day.segments[0].hotelsDetails && (
-                            <span className="inline-flex items-center gap-1 text-xs bg-white/70 text-purple-700 rounded-full px-2.5 py-1 border border-purple-200">
-                              <BedDouble className="h-3 w-3" />
+                            <span className="inline-flex items-center gap-1.5 text-sm bg-white/15 text-white rounded-full px-3 py-1 border border-white/25">
+                              <BedDouble className="h-4 w-4 shrink-0" />
                               {day.segments[0].hotelsDetails}
                             </span>
                           )}
                         </div>
                       )}
                     </CardHeader>
-                    <CardContent className="flex flex-col flex-grow pt-2">
-                      <div className="flex-grow">
-                        {day.segments.map((segment, segIndex) => (
-                          <div key={segment.id}>
-                            <Link
-                              href={`/trip/${segment.date}/${segment.timeSegmentNumeric}`}
-                              onClick={() => history.replaceState(null, '', `#${day.date}`)}
-                              passHref
-                            >
-                              <div className="group block p-3 rounded-lg hover:bg-indigo-50 cursor-pointer transition-colors border-r-2 border-transparent hover:border-indigo-400">
-                                <h4 className="font-bold text-right">{segment.timeSegment}</h4>
-                                <div
-                                  className="text-muted-foreground text-right whitespace-normal text-sm mt-0.5"
-                                  dangerouslySetInnerHTML={{ __html: segment.summary }}
-                                />
-                              </div>
-                            </Link>
-                            {segIndex < day.segments.length - 1 && <Separator />}
-                          </div>
-                        ))}
-                      </div>
+
+                    <CardContent className="flex flex-col flex-grow p-0">
+                      {day.segments.map((segment, segIndex) => (
+                        <div key={segment.id}>
+                          <Link
+                            href={`/trip/${segment.date}/${segment.timeSegmentNumeric}`}
+                            onClick={() => history.replaceState(null, '', `#${day.date}`)}
+                            passHref
+                          >
+                            {/* min-h-[60px] ensures 60px touch target — WCAG 2.5.5 for 65+ */}
+                            <div className="flex flex-col justify-center min-h-[60px] px-5 py-4 hover:bg-amber-50 active:bg-amber-100 transition-colors border-r-4 border-transparent hover:border-amber-400 cursor-pointer">
+                              <h4 className="font-bold text-right text-lg leading-snug">{segment.timeSegment}</h4>
+                              <div
+                                className="text-muted-foreground text-right text-base mt-1 leading-snug"
+                                dangerouslySetInnerHTML={{ __html: segment.summary }}
+                              />
+                            </div>
+                          </Link>
+                          {segIndex < day.segments.length - 1 && <Separator />}
+                        </div>
+                      ))}
                     </CardContent>
                   </Card>
                 </div>
               );
             })}
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      )}
+        )}
+      </main>
     </div>
   );
 }

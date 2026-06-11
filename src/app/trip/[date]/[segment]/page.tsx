@@ -115,94 +115,99 @@ export default function TripSegmentPage() {
   }).format(new Date(segment.date));
 
   return (
-    <main className="container mx-auto max-w-4xl py-8 px-4">
-      <div className="mb-6" data-testid="breadcrumb-nav">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href="/trip">תוכנית הטיול</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href={`/trip#${segment.date}`}>{formattedDate}</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{segment.timeSegment}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+    <div className="min-h-screen bg-background">
+      {/* Sticky breadcrumb bar */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 sm:px-6 py-3" data-testid="breadcrumb-nav">
+        <div className="max-w-4xl mx-auto">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/trip" className="text-base">תוכנית הטיול</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href={`/trip#${segment.date}`} className="text-base">{formattedDate}</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="text-base">{segment.timeSegment}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
       </div>
 
-      <Card className="overflow-hidden shadow-md">
-        {/* Hero banner */}
-        <div className="bg-gradient-to-l from-blue-50 to-indigo-100 px-6 py-5 border-b">
-          <p className="text-sm font-medium text-indigo-500 text-right mb-1">{formattedDate}</p>
-          <h1 className="text-3xl font-bold text-right text-indigo-900">{segment.timeSegment}</h1>
-          <div
-            className="text-indigo-700/80 text-right mt-2"
-            dangerouslySetInnerHTML={{ __html: segment.summary }}
-          />
-        </div>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <Card className="overflow-hidden shadow-md">
+          {/* Deep navy hero banner — matches day card header */}
+          <div className="bg-gradient-to-l from-slate-700 to-blue-900 text-white px-6 sm:px-8 py-6 sm:py-8">
+            <p className="text-base font-medium text-blue-200 text-right mb-2">{formattedDate}</p>
+            <h1 className="text-3xl sm:text-4xl font-bold text-right text-white leading-tight">{segment.timeSegment}</h1>
+            <div
+              className="text-blue-100 text-right text-lg mt-3 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: segment.summary }}
+            />
+          </div>
 
-        <CardContent className="pt-6">
-          <div
-            className="prose prose-blue dark:prose-invert max-w-none text-right"
-            dangerouslySetInnerHTML={{ __html: segment.detailedContent }}
-          />
+          <CardContent className="px-6 sm:px-8 pt-7 pb-4">
+            <div
+              className="prose prose-lg prose-slate dark:prose-invert max-w-none text-right leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: segment.detailedContent }}
+            />
 
-          {segment.externalLinks && segment.externalLinks.length > 0 && (
-            <div className="mt-8 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-              <h4 className="text-base font-semibold text-right text-indigo-800 mb-3">קישורים שימושיים</h4>
-              <ul className="list-none p-0 space-y-2">
-                {segment.externalLinks.map((link, index) => (
-                  link.linkLink && link.linkTitle && (
-                    <li key={index}>
-                      <a
-                        href={link.linkLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-end gap-2 rounded-lg bg-white border border-indigo-100 px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
-                      >
-                        {link.linkTitle}
-                        <ExternalLink className="h-4 w-4 shrink-0" />
-                      </a>
-                    </li>
-                  )
-                ))}
-              </ul>
+            {segment.externalLinks && segment.externalLinks.length > 0 && (
+              <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-5">
+                <h4 className="text-lg font-semibold text-right text-slate-800 mb-4">קישורים שימושיים</h4>
+                <ul className="list-none p-0 space-y-3">
+                  {segment.externalLinks.map((link, index) => (
+                    link.linkLink && link.linkTitle && (
+                      <li key={index}>
+                        <a
+                          href={link.linkLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-end gap-3 rounded-xl bg-white border border-slate-200 px-5 py-4 text-base font-medium text-blue-800 hover:bg-blue-50 hover:border-blue-300 active:bg-blue-100 transition-colors min-h-[56px]"
+                        >
+                          {link.linkTitle}
+                          <ExternalLink className="h-5 w-5 shrink-0" />
+                        </a>
+                      </li>
+                    )
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+
+          {/* Full-width prev/next bar — 60px touch target */}
+          <div className="border-t bg-slate-50 px-4 sm:px-6 py-2 flex items-stretch">
+            <div className="flex-1 flex justify-start">
+              {nextSegment && (
+                <Button asChild variant="ghost" className="h-14 text-base font-medium text-blue-800 hover:bg-blue-50 gap-2">
+                  <Link href={`/trip/${nextSegment.date}/${nextSegment.timeSegmentNumeric}`}>
+                    הפעילות הבאה
+                    <ArrowLeft className="h-5 w-5" />
+                  </Link>
+                </Button>
+              )}
             </div>
-          )}
-        </CardContent>
-
-        {/* Full-width prev/next bar */}
-        <div className="border-t bg-muted/30 px-6 py-3 flex items-center justify-between gap-4">
-          <div className="flex-1 flex justify-start">
-            {nextSegment && (
-              <Button asChild variant="ghost" className="text-indigo-700 hover:bg-indigo-50">
-                <Link href={`/trip/${nextSegment.date}/${nextSegment.timeSegmentNumeric}`} className="flex items-center gap-2">
-                  הפעילות הבאה
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-            )}
+            <div className="flex-1 flex justify-end">
+              {previousSegment && (
+                <Button asChild variant="ghost" className="h-14 text-base font-medium text-blue-800 hover:bg-blue-50 gap-2">
+                  <Link href={`/trip/${previousSegment.date}/${previousSegment.timeSegmentNumeric}`}>
+                    <ArrowRight className="h-5 w-5" />
+                    הפעילות הקודמת
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
-          <div className="flex-1 flex justify-end">
-            {previousSegment && (
-              <Button asChild variant="ghost" className="text-indigo-700 hover:bg-indigo-50">
-                <Link href={`/trip/${previousSegment.date}/${previousSegment.timeSegmentNumeric}`} className="flex items-center gap-2">
-                  <ArrowRight className="h-4 w-4" />
-                  הפעילות הקודמת
-                </Link>
-              </Button>
-            )}
-          </div>
-        </div>
-      </Card>
-    </main>
+        </Card>
+      </main>
+    </div>
   );
 }
