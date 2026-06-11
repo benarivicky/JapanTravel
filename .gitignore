@@ -46,3 +46,7 @@ firebase-debug.log
 firestore-debug.log
 
 .*/**
+!.github
+!.github/**
+!.idx
+!.idx/**
