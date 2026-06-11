@@ -189,34 +189,40 @@ export default function TripPage() {
                 >
                   <Card
                     className={[
-                      'flex flex-col h-full transition-all duration-500',
+                      'flex flex-col h-full transition-all duration-500 overflow-hidden',
                       isActive
-                        ? 'ring-4 ring-offset-2 ring-indigo-500 shadow-xl shadow-indigo-300/60 scale-[1.05] bg-indigo-50/40'
-                        : 'shadow-sm',
+                        ? 'ring-4 ring-offset-2 ring-indigo-500 shadow-xl shadow-indigo-300/60 scale-[1.05]'
+                        : 'shadow-sm hover:shadow-md',
                     ].join(' ')}
                   >
-                    <CardHeader>
-                      <CardTitle className="text-right text-xl font-semibold">
-                        {formattedDates[index]}
-                      </CardTitle>
+                    {/* Gradient header */}
+                    <CardHeader className="bg-gradient-to-l from-blue-50 to-indigo-100 pb-3 rounded-t-lg">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="shrink-0 text-xs font-semibold bg-indigo-500 text-white rounded-full px-2.5 py-1">
+                          יום {index + 1}
+                        </span>
+                        <CardTitle className="text-right text-lg font-semibold leading-snug">
+                          {formattedDates[index]}
+                        </CardTitle>
+                      </div>
                       {(day.segments[0]?.city || day.segments[0]?.hotelsDetails) && (
-                        <div className="text-muted-foreground text-right text-sm mt-1 flex justify-end items-center flex-wrap gap-x-4 gap-y-1">
+                        <div className="flex justify-end flex-wrap gap-1.5 mt-2">
                           {day.segments[0].city && (
-                            <div className="flex items-center gap-1">
-                              <span>{day.segments[0].city}</span>
-                              <MapPin className="h-4 w-4" />
-                            </div>
+                            <span className="inline-flex items-center gap-1 text-xs bg-white/70 text-indigo-700 rounded-full px-2.5 py-1 border border-indigo-200">
+                              <MapPin className="h-3 w-3" />
+                              {day.segments[0].city}
+                            </span>
                           )}
                           {day.segments[0].hotelsDetails && (
-                            <div className="flex items-center gap-1">
-                              <span>{day.segments[0].hotelsDetails}</span>
-                              <BedDouble className="h-4 w-4" />
-                            </div>
+                            <span className="inline-flex items-center gap-1 text-xs bg-white/70 text-purple-700 rounded-full px-2.5 py-1 border border-purple-200">
+                              <BedDouble className="h-3 w-3" />
+                              {day.segments[0].hotelsDetails}
+                            </span>
                           )}
                         </div>
                       )}
                     </CardHeader>
-                    <CardContent className="flex flex-col flex-grow">
+                    <CardContent className="flex flex-col flex-grow pt-2">
                       <div className="flex-grow">
                         {day.segments.map((segment, segIndex) => (
                           <div key={segment.id}>
@@ -225,10 +231,10 @@ export default function TripPage() {
                               onClick={() => history.replaceState(null, '', `#${day.date}`)}
                               passHref
                             >
-                              <div className="block p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors">
+                              <div className="group block p-3 rounded-lg hover:bg-indigo-50 cursor-pointer transition-colors border-r-2 border-transparent hover:border-indigo-400">
                                 <h4 className="font-bold text-right">{segment.timeSegment}</h4>
                                 <div
-                                  className="text-muted-foreground text-right whitespace-normal"
+                                  className="text-muted-foreground text-right whitespace-normal text-sm mt-0.5"
                                   dangerouslySetInnerHTML={{ __html: segment.summary }}
                                 />
                               </div>

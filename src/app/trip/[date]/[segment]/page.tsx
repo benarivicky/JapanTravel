@@ -138,51 +138,52 @@ export default function TripSegmentPage() {
         </Breadcrumb>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-right">
-            {segment.timeSegment} - {formattedDate}
-          </CardTitle>
-          
-          <div className="text-muted-foreground text-right text-lg pt-2" dangerouslySetInnerHTML={{ __html: segment.summary }} />
-        </CardHeader>
-        <CardContent>
+      <Card className="overflow-hidden shadow-md">
+        {/* Hero banner */}
+        <div className="bg-gradient-to-l from-blue-50 to-indigo-100 px-6 py-5 border-b">
+          <p className="text-sm font-medium text-indigo-500 text-right mb-1">{formattedDate}</p>
+          <h1 className="text-3xl font-bold text-right text-indigo-900">{segment.timeSegment}</h1>
+          <div
+            className="text-indigo-700/80 text-right mt-2"
+            dangerouslySetInnerHTML={{ __html: segment.summary }}
+          />
+        </div>
+
+        <CardContent className="pt-6">
           <div
             className="prose prose-blue dark:prose-invert max-w-none text-right"
             dangerouslySetInnerHTML={{ __html: segment.detailedContent }}
           />
 
           {segment.externalLinks && segment.externalLinks.length > 0 && (
-            <div className="mt-8 text-right space-y-2">
-              <h4 className="text-xl font-bold">קישורים שימושיים</h4>
-              <ul className="list-none p-0">
+            <div className="mt-8 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+              <h4 className="text-base font-semibold text-right text-indigo-800 mb-3">קישורים שימושיים</h4>
+              <ul className="list-none p-0 space-y-2">
                 {segment.externalLinks.map((link, index) => (
                   link.linkLink && link.linkTitle && (
-                    <li key={index} className="mt-1">
-                      <Button asChild variant="link" className="p-0 h-auto">
-                        <a href={link.linkLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-lg text-link">
-                          {link.linkTitle}
-                          <ExternalLink className="h-5 w-5" />
-                        </a>
-                      </Button>
+                    <li key={index}>
+                      <a
+                        href={link.linkLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-end gap-2 rounded-lg bg-white border border-indigo-100 px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+                      >
+                        {link.linkTitle}
+                        <ExternalLink className="h-4 w-4 shrink-0" />
+                      </a>
                     </li>
                   )
                 ))}
               </ul>
             </div>
           )}
+        </CardContent>
 
-          <div className="mt-8 pt-6 border-t flex justify-between">
-            {previousSegment && (
-              <Button asChild variant="outline">
-                <Link href={`/trip/${previousSegment.date}/${previousSegment.timeSegmentNumeric}`} className="flex items-center gap-2">
-                  <ArrowRight className="h-4 w-4" />
-                  הפעילות הקודמת
-                </Link>
-              </Button>
-            )}
+        {/* Full-width prev/next bar */}
+        <div className="border-t bg-muted/30 px-6 py-3 flex items-center justify-between gap-4">
+          <div className="flex-1 flex justify-start">
             {nextSegment && (
-              <Button asChild variant="outline">
+              <Button asChild variant="ghost" className="text-indigo-700 hover:bg-indigo-50">
                 <Link href={`/trip/${nextSegment.date}/${nextSegment.timeSegmentNumeric}`} className="flex items-center gap-2">
                   הפעילות הבאה
                   <ArrowLeft className="h-4 w-4" />
@@ -190,8 +191,17 @@ export default function TripSegmentPage() {
               </Button>
             )}
           </div>
-
-        </CardContent>
+          <div className="flex-1 flex justify-end">
+            {previousSegment && (
+              <Button asChild variant="ghost" className="text-indigo-700 hover:bg-indigo-50">
+                <Link href={`/trip/${previousSegment.date}/${previousSegment.timeSegmentNumeric}`} className="flex items-center gap-2">
+                  <ArrowRight className="h-4 w-4" />
+                  הפעילות הקודמת
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
       </Card>
     </main>
   );

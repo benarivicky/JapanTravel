@@ -5,7 +5,7 @@
  * breadcrumb renders with the right items, links, and accessibility attrs.
  */
 import React from "react"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -54,9 +54,10 @@ describe("TripSegmentPage — breadcrumb", () => {
       expect(screen.getByTestId("breadcrumb-nav")).toBeInTheDocument()
     })
 
-    expect(screen.getByRole("navigation", { name: "breadcrumb" })).toBeInTheDocument()
-    expect(screen.getByText("תוכנית הטיול")).toBeInTheDocument()
-    expect(screen.getByText("בוקר")).toBeInTheDocument()
+    const nav = screen.getByRole("navigation", { name: "breadcrumb" })
+    expect(nav).toBeInTheDocument()
+    expect(within(nav).getByText("תוכנית הטיול")).toBeInTheDocument()
+    expect(within(nav).getByText("בוקר")).toBeInTheDocument()
   })
 
   test("'תוכנית הטיול' breadcrumb item links to /trip", async () => {
@@ -73,11 +74,9 @@ describe("TripSegmentPage — breadcrumb", () => {
   test("current segment name renders as non-linked BreadcrumbPage", async () => {
     render(<TripSegmentPage />)
 
-    await waitFor(() => {
-      expect(screen.getByText("בוקר")).toBeInTheDocument()
-    })
+    const nav = await waitFor(() => screen.getByRole("navigation", { name: "breadcrumb" }))
 
-    const page = screen.getByText("בוקר")
+    const page = within(nav).getByText("בוקר")
     expect(page).toHaveAttribute("aria-current", "page")
     expect(page.tagName).not.toBe("A")
   })
