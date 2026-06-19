@@ -1,13 +1,6 @@
 import type {Metadata} from 'next';
-import { Fredoka } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-
-const fredoka = Fredoka({
-  subsets: ['latin'],
-  variable: '--font-fredoka',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: 'טיול ליפן',
@@ -20,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" className={fredoka.variable} suppressHydrationWarning>
+    <html lang="he" dir="rtl" suppressHydrationWarning>
       <head />
       <body className="font-body antialiased" suppressHydrationWarning>
         {children}

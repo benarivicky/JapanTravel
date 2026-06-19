@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { useTripId } from '@/hooks/use-trip-id';
 import { getTripPlans } from '@/lib/database';
 import type { TripSegment } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatTripDate } from '@/lib/trip';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   Breadcrumb,
@@ -109,11 +110,7 @@ export default function TripSegmentPage() {
     return notFound();
   }
 
-  const formattedDate = new Intl.DateTimeFormat('he-IL', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }).format(new Date(segment.date));
+  const formattedDate = formatTripDate(segment.date);
 
   return (
     <div className="min-h-screen bg-background">
@@ -124,13 +121,14 @@ export default function TripSegmentPage() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link href="/trip" className="text-base">תוכנית הטיול</Link>
+                  {/* Hash makes the trip plan scroll to + highlight this day on return */}
+                  <Link href={`/trip#${segment.date}`} className="text-base">תוכנית הטיול</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link href={`/trip#${segment.date}`} className="text-base">{formattedDate}</Link>
+                  <Link href={`/trip/${segment.date}`} className="text-base">{formattedDate}</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />

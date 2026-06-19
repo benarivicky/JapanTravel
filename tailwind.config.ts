@@ -10,8 +10,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['var(--font-fredoka)', 'sans-serif'],
-        headline: ['var(--font-fredoka)', 'sans-serif'],
+        // Calibri is a Microsoft system font (not deliverable via Google/web fonts):
+        // it renders natively on Windows; Carlito is a metric-compatible free fallback
+        // for other platforms, then the platform sans-serif.
+        body: ['Calibri', 'Carlito', 'Segoe UI', 'system-ui', 'sans-serif'],
+        headline: ['Calibri', 'Carlito', 'Segoe UI', 'system-ui', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {

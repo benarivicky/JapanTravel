@@ -1,0 +1,29 @@
+# Build artifacts & deps (reinstalled/rebuilt inside the image)
+node_modules
+.next
+.swc
+
+# VCS / CI / editor
+.git
+.github
+.vscode
+.idx
+.vs
+
+# Docs & local tooling
+*.md
+GUIDE.pdf
+docs
+scripts
+
+# Docker / infra files (not needed in the build context)
+Dockerfile
+.dockerignore
+docker-compose.yml
+Caddyfile
+caddy_data
+caddy_config
+
+# NOTE: .env.local is intentionally NOT ignored — `next build` needs the
+# NEXT_PUBLIC_* values at build time. It is only present in the builder stage
+# and is never copied into the final runtime image.

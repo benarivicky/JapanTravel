@@ -60,7 +60,7 @@ describe("TripSegmentPage — breadcrumb", () => {
     expect(within(nav).getByText("בוקר")).toBeInTheDocument()
   })
 
-  test("'תוכנית הטיול' breadcrumb item links to /trip", async () => {
+  test("'תוכנית הטיול' breadcrumb item links to /trip#<date>", async () => {
     render(<TripSegmentPage />)
 
     await waitFor(() => {
@@ -68,7 +68,7 @@ describe("TripSegmentPage — breadcrumb", () => {
     })
 
     const homeLinks = screen.getAllByRole("link", { name: "תוכנית הטיול" })
-    expect(homeLinks[0]).toHaveAttribute("href", "/trip")
+    expect(homeLinks[0]).toHaveAttribute("href", "/trip#2024-03-20")
   })
 
   test("current segment name renders as non-linked BreadcrumbPage", async () => {

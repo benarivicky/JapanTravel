@@ -1,6 +1,6 @@
 import { db } from './firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import type { TripSegment } from './types';
+import type { TripSegment, TripDay } from './types';
 
 export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
   console.log(`Fetching trip plans from Firestore for tripId: ${tripId}`);
@@ -64,6 +64,27 @@ export async function getTripPlans(tripId: string): Promise<TripSegment[]> {
     console.error('Error fetching trip plans from Firestore:', error);
     throw error;
   }
+}
+
+/**
+ * Returns the trip's segments grouped into days, days sorted by date and
+ * activities within each day sorted by timeSegmentNumeric. Shared by the trip
+ * overview (TripView) and the day page so grouping stays consistent.
+ */
+export async function getTripDays(tripId: string): Promise<TripDay[]> {
+  const segments = await getTripPlans(tripId);
+
+  const groupedByDate = segments.reduce((acc, segment) => {
+    (acc[segment.date] ||= []).push(segment);
+    return acc;
+  }, {} as Record<string, TripSegment[]>);
+
+  return Object.entries(groupedByDate)
+    .map(([date, segs]) => ({
+      date,
+      segments: segs.sort((a, b) => a.timeSegmentNumeric - b.timeSegmentNumeric),
+    }))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
 export async function getTripCustomerName(tripId: string): Promise<string | null> {

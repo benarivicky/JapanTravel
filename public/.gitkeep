@@ -1,0 +1,2 @@
+# Keeps the public/ directory present for the Docker build (COPY public).
+# Drop static assets (favicon, images, robots.txt, …) here.

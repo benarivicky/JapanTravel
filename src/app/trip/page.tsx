@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTripId } from '@/hooks/use-trip-id';
 import { useAuth } from '@/hooks/use-auth';
-import { getTripPlans, getTripCustomerName } from '@/lib/database';
+import { getTripDays, getTripCustomerName } from '@/lib/database';
 import type { TripDay } from '@/lib/types';
+import { formatTripDate, getDayShortDescription } from '@/lib/trip';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Loader2, Terminal, ArrowRight, BedDouble, MapPin, Camera } from 'lucide-react';
+import { Loader2, Terminal, ArrowRight, ArrowLeft, Camera } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 export default function TripPage() {
   const router = useRouter();
@@ -37,31 +38,17 @@ export default function TripPage() {
         setLoading(true);
         setError(null);
         try {
-          const [segments, name] = await Promise.all([
-            getTripPlans(tripId),
+          const [days, name] = await Promise.all([
+            getTripDays(tripId),
             getTripCustomerName(tripId),
           ]);
 
           setCustomerName(name);
 
-          if (segments.length === 0) {
+          if (days.length === 0) {
             setError(`לא נמצאו נתוני טיול עבור מזהה "${tripId}". אנא ודא שהמסמך קיים ב-Firestore בנתיב "tripPlans/${tripId}" ומכיל מערך תקין בשם "dailyItinerary".`);
             setTripDays([]);
           } else {
-            const groupedByDate = segments.reduce((acc, segment) => {
-              const date = segment.date;
-              if (!acc[date]) acc[date] = [];
-              acc[date].push(segment);
-              return acc;
-            }, {} as Record<string, typeof segments>);
-
-            const days: TripDay[] = Object.entries(groupedByDate)
-              .map(([date, segs]) => ({
-                date,
-                segments: segs.sort((a, b) => a.timeSegmentNumeric - b.timeSegmentNumeric),
-              }))
-              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
             setTripDays(days);
           }
         } catch (e: unknown) {
@@ -76,7 +63,7 @@ export default function TripPage() {
     }
   }, [tripId]);
 
-  // Grid layout scrolls naturally — scrollIntoView works without any Radix workaround.
+  // Returning from a day page lands on /trip#<date>; scroll that day card into view.
   const scrollToDate = useCallback((date: string) => {
     const card = cardRefs.current[date];
     if (!card) return;
@@ -100,17 +87,6 @@ export default function TripPage() {
       window.removeEventListener('hashchange', run);
     };
   }, [tripDays, scrollToDate]);
-
-  const formattedDates = useMemo(() => {
-    return tripDays.map(day => {
-      const date = new Date(day.date);
-      return new Intl.DateTimeFormat('he-IL', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      }).format(date);
-    });
-  }, [tripDays]);
 
   const handleLogout = () => {
     clearTripId();
@@ -161,80 +137,68 @@ export default function TripPage() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : (
-          /* Responsive grid: 1 col phone → 2 col tablet → 3 col desktop.
-             Cards fill equal width at every breakpoint ("averaged" tiles). */
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
-            {tripDays.map((day, index) => {
-              const isActive = activeDate === day.date;
-              return (
-                <div
-                  key={day.date}
-                  ref={el => { cardRefs.current[day.date] = el; }}
-                >
-                  <Card
-                    className={[
-                      'flex flex-col h-full transition-all duration-500 overflow-hidden',
-                      isActive
-                        ? 'ring-4 ring-offset-2 ring-indigo-500 shadow-2xl shadow-indigo-400/40 scale-[1.02]'
-                        : 'shadow-sm hover:shadow-lg hover:-translate-y-0.5',
-                    ].join(' ')}
-                  >
-                    {/* Deep navy gradient header — premium, high-contrast */}
-                    <CardHeader className="bg-gradient-to-l from-slate-700 to-blue-900 text-white pb-4 rounded-t-xl">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="shrink-0 text-sm font-bold bg-amber-400 text-slate-900 rounded-full px-3 py-1">
-                          יום {index + 1}
-                        </span>
-                        <CardTitle className="text-right text-xl font-bold text-white leading-snug">
-                          {formattedDates[index]}
-                        </CardTitle>
-                      </div>
-                      {(day.segments[0]?.city || day.segments[0]?.hotelsDetails) && (
-                        <div className="flex justify-end flex-wrap gap-2 mt-3">
-                          {day.segments[0].city && (
-                            <span className="inline-flex items-center gap-1.5 text-sm bg-white/15 text-white rounded-full px-3 py-1 border border-white/25">
-                              <MapPin className="h-4 w-4 shrink-0" />
-                              {day.segments[0].city}
-                            </span>
-                          )}
-                          {day.segments[0].hotelsDetails && (
-                            <span className="inline-flex items-center gap-1.5 text-sm bg-white/15 text-white rounded-full px-3 py-1 border border-white/25">
-                              <BedDouble className="h-4 w-4 shrink-0" />
-                              {day.segments[0].hotelsDetails}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </CardHeader>
-
-                    <CardContent className="flex flex-col flex-grow p-0">
-                      {day.segments.map((segment, segIndex) => (
-                        <div key={segment.id}>
-                          <Link
-                            href={`/trip/${segment.date}/${segment.timeSegmentNumeric}`}
-                            onClick={() => history.replaceState(null, '', `#${day.date}`)}
-                            passHref
-                          >
-                            {/* min-h-[60px] ensures 60px touch target — WCAG 2.5.5 for 65+ */}
-                            <div className="flex flex-col justify-center min-h-[60px] px-5 py-4 hover:bg-amber-50 active:bg-amber-100 transition-colors border-r-4 border-transparent hover:border-amber-400 cursor-pointer">
-                              <h4 className="font-bold text-right text-lg leading-snug">{segment.timeSegment}</h4>
-                              <div
-                                className="text-muted-foreground text-right text-base mt-1 leading-snug"
-                                dangerouslySetInnerHTML={{ __html: segment.summary }}
-                              />
-                            </div>
-                          </Link>
-                          {segIndex < day.segments.length - 1 && <Separator />}
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </div>
-              );
-            })}
+          /* Days list: 1 col phone → 2 col tablet → 3 col desktop */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {tripDays.map((day, index) => (
+              <div key={day.date} ref={el => { cardRefs.current[day.date] = el; }}>
+                <DayCard day={day} index={index} isActive={activeDate === day.date} />
+              </div>
+            ))}
           </div>
         )}
       </main>
     </div>
+  );
+}
+
+function DayCard({ day, index, isActive }: { day: TripDay; index: number; isActive: boolean }) {
+  const formattedDate = formatTripDate(day.date);
+  const description = getDayShortDescription(day);
+
+  return (
+    <Link
+      href={`/trip/${day.date}`}
+      onClick={() => history.replaceState(null, '', `#${day.date}`)}
+      className="group block h-full rounded-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+      aria-label={`יום ${index + 1}, ${formattedDate}`}
+    >
+      <Card
+        className={cn(
+          'flex flex-col h-full overflow-hidden transition-all duration-300',
+          isActive
+            ? 'ring-4 ring-offset-2 ring-indigo-500 shadow-xl shadow-indigo-400/40'
+            : 'shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5',
+        )}
+      >
+        {/* Compact navy header — day number + date only */}
+        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 px-4 py-3 bg-gradient-to-l from-slate-700 to-blue-900 rounded-t-lg">
+          <span className="shrink-0 text-sm font-bold bg-amber-400 text-slate-900 rounded-full px-2.5 py-0.5">
+            יום {index + 1}
+          </span>
+          <CardTitle className="text-right text-base font-bold text-white leading-snug">
+            {formattedDate}
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="flex flex-col flex-grow p-4">
+          {description && (
+            <div
+              className="text-muted-foreground text-right text-sm leading-snug line-clamp-2 [&_p]:inline [&_p]:m-0"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
+          )}
+
+          <div className="flex items-center justify-between mt-auto pt-3 text-blue-800">
+            <span className="inline-flex items-center gap-1.5 font-bold text-sm group-hover:gap-2.5 transition-all">
+              צפו ביום
+              <ArrowLeft className="h-4 w-4" />
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {day.segments.length} פעילויות
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }

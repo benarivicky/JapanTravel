@@ -1,0 +1,30 @@
+# JapanTravel app, integrated behind the existing central Caddy proxy
+# (project: caddy-setup, network: caddy-setup_default).
+#
+# The app publishes NO host ports — the shared Caddy reaches it internally as
+# http://japantravel-app:3000 and terminates TLS for japantravel.amitkuzi.com.
+#
+#   Start / update:  docker compose up -d --build
+#   Logs:            docker compose logs -f app
+#   Stop:            docker compose down
+#
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: japantravel-app
+    container_name: japantravel-app
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    expose:
+      - "3000"
+    networks:
+      - caddy
+
+networks:
+  # Join the existing proxy's network instead of creating a new one.
+  caddy:
+    name: caddy-setup_default
+    external: true
