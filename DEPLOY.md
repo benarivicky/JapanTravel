@@ -31,6 +31,7 @@ Go to **GitHub → Settings → Secrets and variables → Actions → New reposi
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | `74401408081` |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | `1:74401408081:web:b800d86167f5962ac3c470` |
 | `GOOGLE_AI_API_KEY` | Google AI / Gemini API key |
+| `GOOGLE_MAPS_API_KEY` | Places API (New) key for Maps-link photo previews — optional; omit to disable |
 | `FIREBASE_SERVICE_ACCOUNT` | JSON of a GCP service account (see step 2) |
 
 #### 2. Create a Firebase service account
@@ -79,7 +80,8 @@ for SECRET in \
   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET \
   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID \
   NEXT_PUBLIC_FIREBASE_APP_ID \
-  GOOGLE_AI_API_KEY; do
+  GOOGLE_AI_API_KEY \
+  GOOGLE_MAPS_API_KEY; do
     echo -n "VALUE" | gcloud secrets create "$SECRET" \
       --data-file=- \
       --project japantravelplanners-d2992
