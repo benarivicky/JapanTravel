@@ -17,16 +17,33 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'invalid url' }, { status: 400 });
   }
 
-  // Google Maps links don't expose a useful OG image on a plain fetch, so for
-  // them we look up a Google-curated place photo via the Places API instead.
-  // Any failure here falls through to the generic OG scrape below.
-  if (isGoogleMapsUrl(targetUrl)) {
-    const place = await mapsPlacePreview(targetUrl);
-    if (place) {
-      return NextResponse.json(place, { headers: cacheHeaders() });
-    }
+  // 1. The link IS an image (Google Drive file, direct .jpg/.png, …) — preview
+  //    the image itself.
+  const direct = directImageUrl(targetUrl);
+  if (direct) {
+    return NextResponse.json(
+      { image: direct, domain: targetUrl.hostname },
+      { headers: cacheHeaders() },
+    );
   }
 
+  // 2. Google Maps place OR route. Maps links don't expose a useful OG image on
+  //    a plain fetch, so we look up a Google-curated photo via the Places API
+  //    (route links → photo of the destination). If no photo is found we fall
+  //    back to a bare domain row — never a map screenshot.
+  if (isGoogleMapsUrl(targetUrl)) {
+    const query = await extractPlaceQuery(targetUrl);
+    const place = query ? await placePhoto(query) : null;
+    return NextResponse.json(
+      place ? { ...place, domain: targetUrl.hostname } : { domain: targetUrl.hostname },
+      { headers: cacheHeaders() },
+    );
+  }
+
+  // 3. Regular web page — scrape OG/Twitter tags. If the page exposes no social
+  //    image, fall back to a Google-curated place photo looked up from the
+  //    page's name (works for attraction/business pages; otherwise just the
+  //    favicon row the client already renders).
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
@@ -59,13 +76,19 @@ export async function GET(request: NextRequest) {
     }
     const html = new TextDecoder().decode(Buffer.concat(chunks));
 
+    const description = extractMeta(html, ['og:description', 'description']);
+    const siteName    = extractMeta(html, ['og:site_name']);
+    let   image       = extractMeta(html, ['og:image', 'twitter:image']);
+
+    // Fallback: no social image → try a place photo from the page's name.
+    if (!image) {
+      const name = pageName(html, siteName, targetUrl);
+      const place = name ? await placePhoto(name) : null;
+      if (place) image = place.image;
+    }
+
     return NextResponse.json(
-      {
-        image:       extractMeta(html, ['og:image', 'twitter:image']),
-        description: extractMeta(html, ['og:description', 'description']),
-        siteName:    extractMeta(html, ['og:site_name']),
-        domain:      targetUrl.hostname,
-      },
+      { image: image ?? null, description, siteName, domain: targetUrl.hostname },
       { headers: cacheHeaders() },
     );
   } catch {
@@ -91,7 +114,48 @@ function extractMeta(html: string, names: string[]): string | null {
   return null;
 }
 
-// ── Google Maps place-photo lookup ─────────────────────────────────────────
+/** A best-effort place/business name for a page: og:site_name, og:title, or the
+ *  first segment of <title> (sites usually append " | Brand" / " - Brand"). */
+function pageName(html: string, siteName: string | null, url: URL): string | null {
+  const ogTitle = extractMeta(html, ['og:title']);
+  const title = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1];
+  const raw = siteName || ogTitle || title;
+  if (!raw) return null;
+  // Drop a trailing " | Site", " - Site", " – Site", " — Site" suffix.
+  const name = raw.split(/\s[|\-–—]\s/)[0].trim();
+  // Ignore junk like a lone hostname or empty string.
+  if (!name || name.toLowerCase() === url.hostname.toLowerCase()) return null;
+  return name;
+}
+
+// ── Image links ─────────────────────────────────────────────────────────────
+
+/**
+ * If the URL points directly at an image (a shared Google Drive file, or a
+ * plain .jpg/.png/… URL), returns a directly-renderable image URL. Otherwise null.
+ */
+function directImageUrl(url: URL): string | null {
+  const host = url.hostname.toLowerCase();
+
+  // Google Drive / Docs file → public thumbnail endpoint (no auth needed for
+  // files shared "anyone with the link"). Handles /file/d/<id>/ and ?id=<id>.
+  if (host === 'drive.google.com' || host === 'docs.google.com') {
+    const id =
+      url.pathname.match(/\/file\/d\/([^/]+)/)?.[1] ||
+      url.pathname.match(/\/d\/([^/]+)/)?.[1] ||
+      url.searchParams.get('id');
+    if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+  }
+
+  // Plain image URL by extension.
+  if (/\.(jpe?g|png|gif|webp|avif|bmp|svg)$/i.test(url.pathname)) {
+    return url.toString();
+  }
+
+  return null;
+}
+
+// ── Google Places photo lookup (shared by Maps links and page fallback) ──────
 
 const MAPS_HOSTS = new Set([
   'maps.app.goo.gl',
@@ -107,21 +171,14 @@ function isGoogleMapsUrl(url: URL): boolean {
 }
 
 /**
- * Resolves a Google Maps URL to a Places photo preview, or null if no usable
- * photo is found / the API key is unconfigured / anything goes wrong.
+ * Looks up a Google-curated place photo for a free-text query (place name).
+ * Returns { image, siteName } or null if no photo / no API key / on error.
  */
-async function mapsPlacePreview(url: URL): Promise<{
-  image: string;
-  siteName: string | null;
-  domain: string;
-} | null> {
+async function placePhoto(query: string): Promise<{ image: string; siteName: string | null } | null> {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) return null;
 
   try {
-    const query = await extractPlaceQuery(url);
-    if (!query) return null;
-
     // Places API (New) — Text Search. Ask only for the fields we render.
     const searchRes = await fetchWithTimeout('https://places.googleapis.com/v1/places:searchText', {
       method: 'POST',
@@ -153,59 +210,110 @@ async function mapsPlacePreview(url: URL): Promise<{
     const photo = (await photoRes.json()) as { photoUri?: string };
     if (!photo.photoUri) return null;
 
-    return {
-      image: photo.photoUri,
-      siteName: place?.displayName?.text ?? null,
-      domain: url.hostname,
-    };
+    return { image: photo.photoUri, siteName: place?.displayName?.text ?? null };
   } catch {
     return null;
   }
 }
 
 /**
- * Derives a text query (place name or "lat,lng") from a Google Maps URL,
- * following one redirect hop for shortened maps.app.goo.gl / goo.gl links.
+ * Derives a text query from a Google Maps URL — a place name, or the
+ * destination of a directions/route link — following the redirect chain for
+ * shortened maps.app.goo.gl / goo.gl links.
  */
 async function extractPlaceQuery(url: URL): Promise<string | null> {
   let resolved = url;
 
-  // Shortened links redirect to the full /maps/place/… URL.
+  // Shortened links redirect to the full /maps/… URL.
   if (resolved.hostname === 'maps.app.goo.gl' || resolved.hostname === 'goo.gl') {
-    const location = await followRedirect(resolved.toString());
-    if (!location) return null;
+    const full = await resolveRedirect(resolved.toString());
+    if (!full) return null;
     try {
-      resolved = new URL(location);
+      resolved = new URL(full);
     } catch {
       return null;
     }
   }
 
+  // Directions / route: /maps/dir/<origin>/<destination>/… — preview the
+  // destination (the place you're travelling to).
+  if (resolved.pathname.includes('/maps/dir/') || resolved.searchParams.get('destination')) {
+    const dest = routeDestination(resolved);
+    if (dest) return dest;
+  }
+
   // /maps/place/<NAME>/@lat,lng,...
-  const placeMatch = resolved.pathname.match(/\/maps\/place\/([^/]+)/);
+  const placeMatch = resolved.pathname.match(/\/maps\/place\/([^/@]+)/);
   if (placeMatch) {
-    const name = decodeURIComponent(placeMatch[1].replace(/\+/g, ' ')).trim();
-    if (name && !/^@/.test(name)) return name;
+    const name = cleanQuery(placeMatch[1]);
+    if (name) return name;
   }
 
   // ?q=… / ?query=… (Maps URLs API form). Ignore bare lat,lng-only queries —
   // Text Search needs a place name to return a meaningful photo.
   const q = resolved.searchParams.get('query') || resolved.searchParams.get('q');
   if (q) {
-    const trimmed = q.trim();
-    if (trimmed && !/^[-\d.]+,[-\d.\s]+$/.test(trimmed)) return trimmed;
+    const trimmed = cleanQuery(q);
+    if (trimmed && !isLatLng(trimmed)) return trimmed;
   }
 
   return null;
 }
 
-async function followRedirect(url: string): Promise<string | null> {
-  try {
-    const res = await fetchWithTimeout(url, { redirect: 'manual' });
-    return res.headers.get('location');
-  } catch {
-    return null;
+/** Extracts the destination place name from a /maps/dir/ or ?destination= URL. */
+function routeDestination(url: URL): string | null {
+  const param = url.searchParams.get('destination');
+  if (param) {
+    const cleaned = cleanQuery(param);
+    if (cleaned && !isLatLng(cleaned)) return cleaned;
   }
+
+  const dirMatch = url.pathname.match(/\/maps\/dir\/(.+)/);
+  if (dirMatch) {
+    // Segments between origin and the trailing @coords / data= blob.
+    const segments = dirMatch[1]
+      .split('/')
+      .filter(s => s && !s.startsWith('@') && !s.startsWith('data=') && s !== '');
+    for (let i = segments.length - 1; i >= 0; i--) {
+      const cleaned = cleanQuery(segments[i]);
+      if (cleaned && !isLatLng(cleaned)) return cleaned;
+    }
+  }
+  return null;
+}
+
+function cleanQuery(raw: string): string {
+  try {
+    return decodeURIComponent(raw.replace(/\+/g, ' ')).trim();
+  } catch {
+    return raw.replace(/\+/g, ' ').trim();
+  }
+}
+
+function isLatLng(s: string): boolean {
+  return /^[-\d.]+\s*,\s*[-\d.]+$/.test(s);
+}
+
+/**
+ * Follows the redirect chain of a shortened URL to its final destination.
+ * Tries the cheap one-hop Location header first, then a full follow.
+ */
+async function resolveRedirect(url: string): Promise<string | null> {
+  try {
+    const head = await fetchWithTimeout(url, { redirect: 'manual' });
+    const location = head.headers.get('location');
+    if (location) return location;
+  } catch {
+    /* fall through to full follow */
+  }
+  try {
+    const res = await fetchWithTimeout(url, { redirect: 'follow' });
+    res.body?.cancel();
+    if (res.url && res.url !== url) return res.url;
+  } catch {
+    /* ignore */
+  }
+  return null;
 }
 
 async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Response> {
