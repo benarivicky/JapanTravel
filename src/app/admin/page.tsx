@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, UserPlus, UploadCloud, ArrowLeft } from 'lucide-react';
+import { Loader2, UserPlus, UploadCloud, ArrowLeft, MessageSquare } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -63,6 +63,19 @@ export default function AdminDashboardPage() {
                 <CardContent>
                     <Button asChild className="w-full">
                         <Link href="/admin/new-user">Go to User Creation</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-2xl text-right justify-end"><MessageSquare /> Client Feedback</CardTitle>
+                    <CardDescription className="text-right">
+                        Review comments submitted from the site and mark them done.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild className="w-full">
+                        <Link href="/admin/feedback">Go to Feedback</Link>
                     </Button>
                 </CardContent>
             </Card>
