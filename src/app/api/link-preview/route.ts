@@ -64,7 +64,23 @@ export async function GET(request: NextRequest) {
     });
     clearTimeout(timeout);
 
-    if (!res || !res.ok || !res.headers.get('content-type')?.includes('text/html')) {
+    if (!res || !res.ok) {
+      return NextResponse.json({ domain: targetUrl.hostname }, { headers: cacheHeaders() });
+    }
+
+    const contentType = res.headers.get('content-type') ?? '';
+
+    // The URL served an image without an image extension (images.unsplash.com,
+    // CDN URLs with query-string sizing, …) — preview the image itself.
+    if (contentType.startsWith('image/')) {
+      res.body?.cancel();
+      return NextResponse.json(
+        { image: targetUrl.toString(), isImage: true, domain: targetUrl.hostname },
+        { headers: cacheHeaders() },
+      );
+    }
+
+    if (!contentType.includes('text/html')) {
       return NextResponse.json({ domain: targetUrl.hostname }, { headers: cacheHeaders() });
     }
 
