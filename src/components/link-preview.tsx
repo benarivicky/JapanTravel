@@ -26,18 +26,20 @@ interface LinkPreviewProps {
 
 export function LinkPreview({ href, title }: LinkPreviewProps) {
   const [preview, setPreview] = useState<PreviewData | null>(null);
-  const [imgError, setImgError] = useState(false);
+  // 0 = local cache proxy, 1 = direct URL (browser cookies can authorize e.g.
+  // restricted Drive files the server-side proxy cannot fetch), 2 = give up.
+  const [imgAttempt, setImgAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/link-preview?url=${encodeURIComponent(href)}`)
       .then(r => r.json())
-      .then(data => { if (!cancelled) setPreview(data); })
+      .then(data => { if (!cancelled) { setPreview(data); setImgAttempt(0); } })
       .catch(() => null);
     return () => { cancelled = true; };
   }, [href]);
 
-  const hasThumbnail = preview?.image && !imgError;
+  const hasThumbnail = preview?.image && imgAttempt < 2;
   const faviconSrc = preview?.domain
     ? `https://www.google.com/s2/favicons?domain=${preview.domain}&sz=32`
     : null;
@@ -58,10 +60,10 @@ export function LinkPreview({ href, title }: LinkPreviewProps) {
           }`}
         >
           <img
-            src={cachedSrc(preview.image!)}
+            src={imgAttempt === 0 ? cachedSrc(preview.image!) : preview.image!}
             alt={preview.isImage ? title : ''}
             className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-            onError={() => setImgError(true)}
+            onError={() => setImgAttempt(a => a + 1)}
           />
         </div>
       )}

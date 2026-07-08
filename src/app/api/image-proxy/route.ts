@@ -17,7 +17,11 @@ import { isPublicHost } from '@/lib/net-guard';
  * works there without extra configuration.
  */
 
-const CACHE_DIR = process.env.IMAGE_CACHE_DIR || path.join(tmpdir(), 'jt-image-cache');
+// Resolved lazily (not at module scope) so Next's build-time file tracing
+// doesn't try to bundle the temp directory into the standalone output.
+function cacheDir(): string {
+  return process.env.IMAGE_CACHE_DIR || path.join(tmpdir(), 'jt-image-cache');
+}
 const MAX_BYTES = 8 * 1024 * 1024; // refuse images larger than 8 MB
 const FETCH_TIMEOUT_MS = 10_000;
 
@@ -42,7 +46,7 @@ export async function GET(request: NextRequest) {
   }
 
   const key = createHash('sha256').update(target.toString()).digest('hex');
-  const bodyPath = path.join(CACHE_DIR, key);
+  const bodyPath = path.join(cacheDir(), key);
   const metaPath = `${bodyPath}.meta`;
 
   // 1. Cache hit — serve from disk.
@@ -82,7 +86,7 @@ export async function GET(request: NextRequest) {
     // Write-through: tmp file + rename so concurrent requests never read a
     // half-written entry. Cache failures must not break image serving.
     try {
-      await mkdir(CACHE_DIR, { recursive: true });
+      await mkdir(cacheDir(), { recursive: true });
       const tmp = `${bodyPath}.${process.pid}.${Date.now()}.tmp`;
       await writeFile(tmp, buf);
       await rename(tmp, bodyPath);
