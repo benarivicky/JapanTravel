@@ -1,8 +1,11 @@
-# JapanTravel app, integrated behind the existing central Caddy proxy
-# (project: caddy-setup, network: caddy-setup_default).
+# JapanTravel app — LOCAL DEVELOPMENT ONLY.
 #
-# The app publishes NO host ports — the shared Caddy reaches it internally as
-# http://japantravel-app:3000 and terminates TLS for japantravel.amitkuzi.com.
+# The public site (japantravel.amitkuzi.com) is no longer served from this
+# container: it was removed from the central Caddy proxy. Production deploys
+# come from the GitHub prod branch via Firebase App Hosting (see DEPLOY.md).
+#
+# The app publishes NO host ports — if you re-attach it to the shared Caddy
+# network it is reachable internally as http://japantravel-app:3000.
 #
 #   Start / update:  docker compose up -d --build
 #   Logs:            docker compose logs -f app
@@ -20,6 +23,19 @@ services:
       - .env.local
     expose:
       - "3000"
+    # Hardening: block privilege escalation, drop all Linux capabilities, and
+    # make the root filesystem read-only. The app only needs writable temp/cache,
+    # provided as small in-memory tmpfs mounts (noexec stops dropped binaries
+    # from being run — this is what let the XMRig miner execute from /var/tmp).
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      - /var/tmp:rw,noexec,nosuid,size=16m
+      - /app/.next/cache:rw,noexec,nosuid,size=256m
     networks:
       - caddy
 
