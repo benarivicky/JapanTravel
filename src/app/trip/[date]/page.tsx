@@ -143,13 +143,13 @@ export default function TripDayPage() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <Card className="overflow-hidden shadow-md">
-          {/* Deep navy hero banner — matches activity page hero */}
-          <div className="bg-gradient-to-l from-slate-700 to-blue-900 text-white px-6 sm:px-8 py-6 sm:py-8">
+          {/* Sun-red hero banner (logo palette) — matches activity page hero */}
+          <div className="bg-gradient-to-l from-[#7e1418] to-[#b21f24] text-white px-6 sm:px-8 py-6 sm:py-8">
             <div className="flex items-center justify-between gap-3">
-              <span className="shrink-0 text-sm font-bold bg-amber-400 text-slate-900 rounded-full px-3 py-1">
+              <span className="shrink-0 text-sm font-bold bg-[#c99a5b] text-[#2b1d10] rounded-full px-3 py-1">
                 יום {dayNumber}
               </span>
-              <p className="text-base font-medium text-blue-200 text-right">{formattedDate}</p>
+              <p className="text-base font-medium text-white/80 text-right">{formattedDate}</p>
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-right text-white leading-tight mt-3">
               {city || formattedDate}
@@ -181,9 +181,9 @@ export default function TripDayPage() {
               <div key={segment.id}>
                 <Link
                   href={`/trip/${day.date}/${segment.timeSegmentNumeric}`}
-                  className="flex items-center gap-3 min-h-[64px] px-5 sm:px-6 py-4 hover:bg-amber-50 active:bg-amber-100 transition-colors border-r-4 border-transparent hover:border-amber-400 focus:outline-none focus-visible:bg-amber-50"
+                  className="flex items-center gap-3 min-h-[64px] px-5 sm:px-6 py-4 hover:bg-accent/50 active:bg-accent transition-colors border-r-4 border-transparent hover:border-[#c99a5b] focus:outline-none focus-visible:bg-accent/50"
                 >
-                  <ChevronLeft className="h-5 w-5 shrink-0 text-blue-700" />
+                  <ChevronLeft className="h-5 w-5 shrink-0 text-primary" />
                   <div className="flex-grow min-w-0">
                     <h3 className="font-bold text-right text-lg leading-snug">{segment.timeSegment}</h3>
                     <div
@@ -198,10 +198,10 @@ export default function TripDayPage() {
           </CardContent>
 
           {/* Full-width prev/next DAY bar — 60px touch target */}
-          <div className="border-t bg-slate-50 px-4 sm:px-6 py-2 flex items-stretch">
+          <div className="border-t bg-muted px-4 sm:px-6 py-2 flex items-stretch">
             <div className="flex-1 flex justify-start">
               {nextDay && (
-                <Button asChild variant="ghost" className="h-14 text-base font-medium text-blue-800 hover:bg-blue-50 gap-2">
+                <Button asChild variant="ghost" className="h-14 text-base font-medium text-primary hover:bg-accent gap-2">
                   <Link href={`/trip/${nextDay.date}`}>
                     היום הבא
                     <ArrowLeft className="h-5 w-5" />
@@ -211,7 +211,7 @@ export default function TripDayPage() {
             </div>
             <div className="flex-1 flex justify-end">
               {previousDay && (
-                <Button asChild variant="ghost" className="h-14 text-base font-medium text-blue-800 hover:bg-blue-50 gap-2">
+                <Button asChild variant="ghost" className="h-14 text-base font-medium text-primary hover:bg-accent gap-2">
                   <Link href={`/trip/${previousDay.date}`}>
                     <ArrowRight className="h-5 w-5" />
                     היום הקודם

@@ -10,7 +10,7 @@ import type { TripDay } from '@/lib/types';
 import { formatTripDate, getDayShortDescription } from '@/lib/trip';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Terminal, ArrowRight, ArrowLeft, Camera } from 'lucide-react';
+import { Loader2, Terminal, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
@@ -106,16 +106,14 @@ export default function TripPage() {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 sm:px-6 lg:px-8 py-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <h1 className="text-2xl sm:text-3xl font-headline font-bold text-right text-foreground leading-tight">
-            תוכנית הטיול{customerName ? ` — ${customerName}` : ''}
-          </h1>
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="" className="h-12 w-auto shrink-0" />
+            <h1 className="text-2xl sm:text-3xl font-headline font-bold text-right text-foreground leading-tight">
+              תוכנית הטיול{customerName ? ` — ${customerName}` : ''}
+            </h1>
+          </div>
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
-            <Button asChild variant="outline" className="h-11 px-4 text-base gap-2">
-              <Link href="/trip/identify">
-                <Camera className="h-5 w-5" />
-                <span className="hidden sm:inline">צילום</span>
-              </Link>
-            </Button>
             {isAdmin && (
               <Button asChild variant="secondary" className="h-11 px-4 text-base">
                 <Link href="/admin">Admin</Link>
@@ -159,20 +157,20 @@ function DayCard({ day, index, isActive }: { day: TripDay; index: number; isActi
     <Link
       href={`/trip/${day.date}`}
       onClick={() => history.replaceState(null, '', `#${day.date}`)}
-      className="group block h-full rounded-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+      className="group block h-full rounded-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-ring focus-visible:ring-offset-2"
       aria-label={`יום ${index + 1}, ${formattedDate}`}
     >
       <Card
         className={cn(
           'flex flex-col h-full overflow-hidden transition-all duration-300',
           isActive
-            ? 'ring-4 ring-offset-2 ring-indigo-500 shadow-xl shadow-indigo-400/40'
+            ? 'ring-4 ring-offset-2 ring-ring shadow-xl shadow-primary/30'
             : 'shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5',
         )}
       >
-        {/* Compact navy header — day number + date only */}
-        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 px-4 py-3 bg-gradient-to-l from-slate-700 to-blue-900 rounded-t-lg">
-          <span className="shrink-0 text-sm font-bold bg-amber-400 text-slate-900 rounded-full px-2.5 py-0.5">
+        {/* Compact sun-red header (logo palette) — day number + date only */}
+        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 px-4 py-3 bg-gradient-to-l from-[#7e1418] to-[#b21f24] rounded-t-lg">
+          <span className="shrink-0 text-sm font-bold bg-[#c99a5b] text-[#2b1d10] rounded-full px-2.5 py-0.5">
             יום {index + 1}
           </span>
           <CardTitle className="text-right text-base font-bold text-white leading-snug">
@@ -188,7 +186,7 @@ function DayCard({ day, index, isActive }: { day: TripDay; index: number; isActi
             />
           )}
 
-          <div className="flex items-center justify-between mt-auto pt-3 text-blue-800">
+          <div className="flex items-center justify-between mt-auto pt-3 text-primary">
             <span className="inline-flex items-center gap-1.5 font-bold text-sm group-hover:gap-2.5 transition-all">
               צפו ביום
               <ArrowLeft className="h-4 w-4" />

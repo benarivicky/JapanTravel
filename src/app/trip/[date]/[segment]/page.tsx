@@ -142,12 +142,12 @@ export default function TripSegmentPage() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <Card className="overflow-hidden shadow-md">
-          {/* Deep navy hero banner — matches day card header */}
-          <div className="bg-gradient-to-l from-slate-700 to-blue-900 text-white px-6 sm:px-8 py-6 sm:py-8">
-            <p className="text-base font-medium text-blue-200 text-right mb-2">{formattedDate}</p>
+          {/* Sun-red hero banner (logo palette) — matches day card header */}
+          <div className="bg-gradient-to-l from-[#7e1418] to-[#b21f24] text-white px-6 sm:px-8 py-6 sm:py-8">
+            <p className="text-base font-medium text-white/80 text-right mb-2">{formattedDate}</p>
             <h1 className="text-3xl sm:text-4xl font-bold text-right text-white leading-tight">{segment.timeSegment}</h1>
             <div
-              className="text-blue-100 text-right text-lg mt-3 leading-relaxed"
+              className="text-white/90 text-right text-lg mt-3 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: segment.summary }}
             />
           </div>
@@ -159,8 +159,8 @@ export default function TripSegmentPage() {
             />
 
             {segment.externalLinks && segment.externalLinks.length > 0 && (
-              <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <h4 className="text-lg font-semibold text-right text-slate-800 mb-4">קישורים שימושיים</h4>
+              <div className="mt-8 rounded-xl border border-border bg-secondary/60 p-5">
+                <h4 className="text-lg font-semibold text-right text-foreground mb-4">קישורים שימושיים</h4>
                 <ul className="list-none p-0 space-y-4">
                   {segment.externalLinks.map((link, index) => (
                     link.linkLink && link.linkTitle && (
@@ -175,10 +175,10 @@ export default function TripSegmentPage() {
           </CardContent>
 
           {/* Full-width prev/next bar — 60px touch target */}
-          <div className="border-t bg-slate-50 px-4 sm:px-6 py-2 flex items-stretch">
+          <div className="border-t bg-muted px-4 sm:px-6 py-2 flex items-stretch">
             <div className="flex-1 flex justify-start">
               {nextSegment && (
-                <Button asChild variant="ghost" className="h-14 text-base font-medium text-blue-800 hover:bg-blue-50 gap-2">
+                <Button asChild variant="ghost" className="h-14 text-base font-medium text-primary hover:bg-accent gap-2">
                   <Link href={`/trip/${nextSegment.date}/${nextSegment.timeSegmentNumeric}`}>
                     הפעילות הבאה
                     <ArrowLeft className="h-5 w-5" />
@@ -188,7 +188,7 @@ export default function TripSegmentPage() {
             </div>
             <div className="flex-1 flex justify-end">
               {previousSegment && (
-                <Button asChild variant="ghost" className="h-14 text-base font-medium text-blue-800 hover:bg-blue-50 gap-2">
+                <Button asChild variant="ghost" className="h-14 text-base font-medium text-primary hover:bg-accent gap-2">
                   <Link href={`/trip/${previousSegment.date}/${previousSegment.timeSegmentNumeric}`}>
                     <ArrowRight className="h-5 w-5" />
                     הפעילות הקודמת

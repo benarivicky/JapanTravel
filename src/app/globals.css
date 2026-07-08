@@ -4,50 +4,52 @@
 
 @layer base {
   :root {
-    --background: 38 30% 97%;        /* warm cream — easier on aging eyes than cool white */
-    --foreground: 220 42% 13%;       /* deep navy-charcoal */
+    /* Palette drawn from the logo: sun red #B21F24, sakura gold #C99A5B,
+       water blue #2B5D9E, warm cream ground #FAF7F3 */
+    --background: 34 41% 97%;        /* logo cream — easy on aging eyes */
+    --foreground: 20 30% 14%;        /* warm dark brown */
     --card: 0 0% 100%;
-    --card-foreground: 220 42% 13%;
+    --card-foreground: 20 30% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 42% 13%;
-    --primary: 220 52% 27%;          /* rich navy — premium, trustworthy */
+    --popover-foreground: 20 30% 14%;
+    --primary: 358 70% 41%;          /* sun red */
     --primary-foreground: 0 0% 98%;
-    --secondary: 38 22% 93%;         /* warm beige */
-    --secondary-foreground: 220 42% 13%;
-    --muted: 38 18% 95%;
-    --muted-foreground: 220 16% 46%;
-    --accent: 38 22% 93%;            /* warm beige for subtle hover states */
-    --accent-foreground: 220 42% 13%;
+    --secondary: 34 45% 92%;         /* pale sakura gold */
+    --secondary-foreground: 20 30% 14%;
+    --muted: 34 30% 94%;
+    --muted-foreground: 24 15% 42%;
+    --accent: 34 50% 88%;            /* sakura gold for subtle hover states */
+    --accent-foreground: 20 30% 14%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 38 16% 87%;
-    --input: 38 16% 87%;
-    --ring: 220 52% 42%;
+    --border: 34 30% 86%;
+    --input: 34 30% 86%;
+    --ring: 358 70% 45%;
     --radius: 1rem;
-    --link: 220 62% 38%;
+    --link: 214 57% 39%;             /* water blue */
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-    --card: 224 71% 6%;
-    --card-foreground: 213 31% 91%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 213 31% 91%;
-    --primary: 216 83% 85%;
-    --primary-foreground: 224 71% 4%;
-    --secondary: 216 34% 17%;
-    --secondary-foreground: 213 31% 91%;
-    --muted: 216 34% 17%;
-    --muted-foreground: 215 28% 63%;
-    --accent: 256 80% 80%;
-    --accent-foreground: 224 71% 4%;
+    --background: 20 25% 8%;         /* warm charcoal-brown */
+    --foreground: 34 30% 90%;
+    --card: 20 22% 11%;
+    --card-foreground: 34 30% 90%;
+    --popover: 20 25% 8%;
+    --popover-foreground: 34 30% 90%;
+    --primary: 358 62% 58%;          /* sun red, lifted for dark ground */
+    --primary-foreground: 20 25% 8%;
+    --secondary: 20 20% 17%;
+    --secondary-foreground: 34 30% 90%;
+    --muted: 20 20% 17%;
+    --muted-foreground: 30 15% 64%;
+    --accent: 34 45% 62%;            /* sakura gold */
+    --accent-foreground: 20 25% 8%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --ring: 216 83% 85%;
-    --link: 217 91% 60%;
+    --border: 20 20% 20%;
+    --input: 20 20% 20%;
+    --ring: 358 62% 58%;
+    --link: 214 70% 66%;
   }
 }
 
