@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { isPublicHost } from '@/lib/net-guard';
 
 export async function GET(request: NextRequest) {
   const urlParam = request.nextUrl.searchParams.get('url');
@@ -17,12 +18,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'invalid url' }, { status: 400 });
   }
 
+  // SSRF guard: refuse hostnames that resolve to private/reserved space so this
+  // proxy can't be pointed at internal services or the cloud metadata endpoint.
+  if (!(await isPublicHost(targetUrl.hostname))) {
+    return NextResponse.json({ error: 'blocked host' }, { status: 400 });
+  }
+
   // 1. The link IS an image (Google Drive file, direct .jpg/.png, …) — preview
   //    the image itself.
   const direct = directImageUrl(targetUrl);
   if (direct) {
     return NextResponse.json(
-      { image: direct, domain: targetUrl.hostname },
+      { image: direct, isImage: true, domain: targetUrl.hostname },
       { headers: cacheHeaders() },
     );
   }
@@ -48,7 +55,7 @@ export async function GET(request: NextRequest) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
-    const res = await fetch(targetUrl.toString(), {
+    const res = await fetchNoInternalRedirect(targetUrl.toString(), {
       signal: controller.signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; JapanTravelPlanner/1.0)',
@@ -57,7 +64,7 @@ export async function GET(request: NextRequest) {
     });
     clearTimeout(timeout);
 
-    if (!res.ok || !res.headers.get('content-type')?.includes('text/html')) {
+    if (!res || !res.ok || !res.headers.get('content-type')?.includes('text/html')) {
       return NextResponse.json({ domain: targetUrl.hostname }, { headers: cacheHeaders() });
     }
 
@@ -312,6 +319,34 @@ async function resolveRedirect(url: string): Promise<string | null> {
     if (res.url && res.url !== url) return res.url;
   } catch {
     /* ignore */
+  }
+  return null;
+}
+
+/** Like fetch() but follows redirects manually, re-validating every hop against
+ *  isPublicHost so a public URL cannot 3xx-bounce us onto an internal address.
+ *  Returns null if a hop targets a blocked host or the chain is too long. */
+async function fetchNoInternalRedirect(url: string, init: RequestInit = {}): Promise<Response | null> {
+  let current = url;
+  for (let hop = 0; hop < 5; hop++) {
+    let u: URL;
+    try {
+      u = new URL(current);
+    } catch {
+      return null;
+    }
+    if (!['http:', 'https:'].includes(u.protocol) || !(await isPublicHost(u.hostname))) {
+      return null;
+    }
+    const res = await fetch(current, { ...init, redirect: 'manual' });
+    if (res.status >= 300 && res.status < 400) {
+      const loc = res.headers.get('location');
+      res.body?.cancel();
+      if (!loc) return res;
+      current = new URL(loc, current).toString();
+      continue;
+    }
+    return res;
   }
   return null;
 }

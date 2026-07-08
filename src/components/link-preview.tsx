@@ -5,9 +5,18 @@ import { ExternalLink, Globe } from 'lucide-react';
 
 interface PreviewData {
   image?: string | null;
+  /** True when the link itself is an image (Drive file, direct .jpg/.png …) —
+   *  rendered as a full image preview rather than a thumbnail row. */
+  isImage?: boolean;
   description?: string | null;
   siteName?: string | null;
   domain?: string;
+}
+
+/** Remote images are served through the local cache so repeat visitors don't
+ *  re-download them and hotlink-hostile hosts (Drive) can't break previews. */
+function cachedSrc(url: string): string {
+  return `/api/image-proxy?url=${encodeURIComponent(url)}`;
 }
 
 interface LinkPreviewProps {
@@ -40,12 +49,17 @@ export function LinkPreview({ href, title }: LinkPreviewProps) {
       rel="noopener noreferrer"
       className="group flex flex-col rounded-xl bg-card border border-border overflow-hidden hover:border-primary/50 hover:shadow-md active:bg-accent/40 transition-all"
     >
-      {/* Thumbnail — shown once OG image loads */}
+      {/* Image preview — full-height when the link IS an image (e.g. תמונת האיזור),
+          thumbnail band for pages with an OG/place photo */}
       {hasThumbnail && (
-        <div className="w-full h-36 sm:h-44 bg-muted overflow-hidden">
+        <div
+          className={`w-full bg-muted overflow-hidden ${
+            preview.isImage ? 'h-56 sm:h-72' : 'h-36 sm:h-44'
+          }`}
+        >
           <img
-            src={preview.image!}
-            alt=""
+            src={cachedSrc(preview.image!)}
+            alt={preview.isImage ? title : ''}
             className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
             onError={() => setImgError(true)}
           />
