@@ -48,5 +48,6 @@ firestore-debug.log
 .*/**
 !.github
 !.github/**
-!.idx
-!.idx/**
+
+# graphify knowledge-graph output — local tooling artifact, not source
+graphify-out/

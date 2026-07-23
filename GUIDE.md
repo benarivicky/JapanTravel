@@ -49,7 +49,6 @@ Firebase App Hosting runs on Cloud Run. The **Blaze (pay-as-you-go)** plan is re
    | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | `japantravelplanners-d2992.firebasestorage.app` |
    | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | `74401408081` |
    | `NEXT_PUBLIC_FIREBASE_APP_ID` | `1:74401408081:web:b800d86167f5962ac3c470` |
-   | `GOOGLE_AI_API_KEY` | `AIzaSyC-9xdKvXH29GN4k9fMnh_jlu4CDUIRtCc` |
 
 5. Click **Deploy** — Firebase builds and publishes the app automatically.
 

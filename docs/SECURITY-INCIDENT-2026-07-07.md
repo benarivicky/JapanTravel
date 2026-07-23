@@ -33,9 +33,12 @@ plausible path to RCE. Exact exploit not fully reconstructed from logs.
    dropped binary from running).
 
 ## Still required (owner action)
-- **Rotate all leaked secrets** — `GOOGLE_MAPS_API_KEY`, `GOOGLE_AI_API_KEY`, and any
-  Firebase Admin / GCP service-account credentials the container held. The `NEXT_PUBLIC_*`
-  Firebase keys are public by design but review Firestore rules regardless.
+- **Rotate all leaked secrets** — `GOOGLE_MAPS_API_KEY` and any Firebase Admin / GCP
+  service-account credentials the container held. The `NEXT_PUBLIC_*` Firebase keys are
+  public by design but review Firestore rules regardless.
+  (`GOOGLE_AI_API_KEY` was also in the leaked env dump but the Google AI / Genkit feature
+  has since been removed from the app — the key is gone from all config, so revoke the old
+  key in GCP and no replacement is needed.)
 - Review Firestore/Storage for unauthorized access around 2026-07-07.
 - Consider adding egress firewall rules (the app only needs Google APIs + arbitrary HTTP
   for previews — a miner reaching a stratum pool on :10016 should be blockable).

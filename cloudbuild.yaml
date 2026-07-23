@@ -43,7 +43,6 @@ steps:
       - "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${_FIREBASE_STORAGE_BUCKET}"
       - "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${_FIREBASE_MESSAGING_SENDER_ID}"
       - "NEXT_PUBLIC_FIREBASE_APP_ID=${_FIREBASE_APP_ID}"
-      - "GOOGLE_AI_API_KEY=${_GOOGLE_AI_API_KEY}"
 
   # ── Step 5: Production build ──────────────────────────────────────────────
   - name: "node:20"
@@ -58,7 +57,6 @@ steps:
       - "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${_FIREBASE_STORAGE_BUCKET}"
       - "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${_FIREBASE_MESSAGING_SENDER_ID}"
       - "NEXT_PUBLIC_FIREBASE_APP_ID=${_FIREBASE_APP_ID}"
-      - "GOOGLE_AI_API_KEY=${_GOOGLE_AI_API_KEY}"
 
   # ── Step 6: Deploy to Firebase App Hosting ────────────────────────────────
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
@@ -83,7 +81,6 @@ substitutions:
   _FIREBASE_STORAGE_BUCKET: ""
   _FIREBASE_MESSAGING_SENDER_ID: ""
   _FIREBASE_APP_ID: ""
-  _GOOGLE_AI_API_KEY: ""
 
 options:
   logging: CLOUD_LOGGING_ONLY

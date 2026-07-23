@@ -10,19 +10,24 @@ runConfig:
   memoryMiB: 512
 
 env:
-  # Firebase Web SDK — safe to expose (restricted by Firebase console security rules)
+  # Firebase Web SDK — public by design: these ship inside the client JS bundle,
+  # so they are plain values, not Secret Manager secrets. Access is controlled by
+  # Firestore/Storage security rules, not by hiding these keys.
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    secret: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyCT81UBSC9sz3F8awSN14xyLWGs_VreOrc
+    availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    secret: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: japantravelplanners-d2992.firebaseapp.com
+    availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    secret: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: japantravelplanners-d2992
+    availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    secret: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: japantravelplanners-d2992.firebasestorage.app
+    availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "74401408081"
+    availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    secret: NEXT_PUBLIC_FIREBASE_APP_ID
-  # Google AI — server-side only
-  - variable: GOOGLE_AI_API_KEY
-    secret: GOOGLE_AI_API_KEY
+    value: "1:74401408081:web:b800d86167f5962ac3c470"
+    availability: [BUILD, RUNTIME]
