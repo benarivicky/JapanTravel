@@ -38,3 +38,36 @@ export async function isPublicHost(hostname: string): Promise<boolean> {
     return false;
   }
 }
+
+/** Like fetch() but follows redirects manually, re-validating every hop against
+ *  isPublicHost so a public URL cannot 3xx-bounce us onto an internal address.
+ *  Returns null if a hop targets a blocked host/protocol or the chain is too long.
+ *  Shared by every server-side proxy route so the SSRF guard is applied uniformly. */
+export async function safeFetch(
+  url: string,
+  init: RequestInit = {},
+  maxHops = 5,
+): Promise<Response | null> {
+  let current = url;
+  for (let hop = 0; hop < maxHops; hop++) {
+    let u: URL;
+    try {
+      u = new URL(current);
+    } catch {
+      return null;
+    }
+    if (!['http:', 'https:'].includes(u.protocol) || !(await isPublicHost(u.hostname))) {
+      return null;
+    }
+    const res = await fetch(current, { ...init, redirect: 'manual' });
+    if (res.status >= 300 && res.status < 400) {
+      const loc = res.headers.get('location');
+      res.body?.cancel();
+      if (!loc) return res;
+      current = new URL(loc, current).toString();
+      continue;
+    }
+    return res;
+  }
+  return null;
+}

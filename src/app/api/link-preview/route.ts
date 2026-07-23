@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { isPublicHost } from '@/lib/net-guard';
+import { isPublicHost, safeFetch } from '@/lib/net-guard';
 
 export async function GET(request: NextRequest) {
   const urlParam = request.nextUrl.searchParams.get('url');
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
-    const res = await fetchNoInternalRedirect(targetUrl.toString(), {
+    const res = await safeFetch(targetUrl.toString(), {
       signal: controller.signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; JapanTravelPlanner/1.0)',
@@ -335,34 +335,6 @@ async function resolveRedirect(url: string): Promise<string | null> {
     if (res.url && res.url !== url) return res.url;
   } catch {
     /* ignore */
-  }
-  return null;
-}
-
-/** Like fetch() but follows redirects manually, re-validating every hop against
- *  isPublicHost so a public URL cannot 3xx-bounce us onto an internal address.
- *  Returns null if a hop targets a blocked host or the chain is too long. */
-async function fetchNoInternalRedirect(url: string, init: RequestInit = {}): Promise<Response | null> {
-  let current = url;
-  for (let hop = 0; hop < 5; hop++) {
-    let u: URL;
-    try {
-      u = new URL(current);
-    } catch {
-      return null;
-    }
-    if (!['http:', 'https:'].includes(u.protocol) || !(await isPublicHost(u.hostname))) {
-      return null;
-    }
-    const res = await fetch(current, { ...init, redirect: 'manual' });
-    if (res.status >= 300 && res.status < 400) {
-      const loc = res.headers.get('location');
-      res.body?.cancel();
-      if (!loc) return res;
-      current = new URL(loc, current).toString();
-      continue;
-    }
-    return res;
   }
   return null;
 }

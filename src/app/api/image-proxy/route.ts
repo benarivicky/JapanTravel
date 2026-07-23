@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { isPublicHost } from '@/lib/net-guard';
+import { isPublicHost, safeFetch } from '@/lib/net-guard';
 
 /**
  * Serves remote images through a local disk cache.
@@ -67,20 +67,57 @@ export async function GET(request: NextRequest) {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    const res = await fetch(target.toString(), {
-      signal: controller.signal,
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; JapanTravelPlanner/1.0)' },
-    });
-    clearTimeout(timeout);
+    // safeFetch follows redirects manually, re-validating every hop against the
+    // SSRF guard — a public URL cannot 3xx-bounce us onto an internal address.
+    let res: Response | null;
+    try {
+      res = await safeFetch(target.toString(), {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; JapanTravelPlanner/1.0)' },
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    // null = a redirect hop targeted a blocked host, or the chain was too long.
+    if (!res) {
+      return NextResponse.json({ error: 'blocked host' }, { status: 400 });
+    }
 
     const contentType = res.headers.get('content-type') ?? '';
     if (!res.ok || !contentType.startsWith('image/')) {
+      res.body?.cancel();
       return NextResponse.json({ error: 'not an image' }, { status: 502 });
     }
 
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length === 0 || buf.length > MAX_BYTES) {
+    // Reject early when the host declares an oversized body...
+    const declared = Number(res.headers.get('content-length'));
+    if (Number.isFinite(declared) && declared > MAX_BYTES) {
+      res.body?.cancel();
       return NextResponse.json({ error: 'image too large' }, { status: 502 });
+    }
+
+    // ...then enforce the cap while streaming so a lying/absent Content-Length
+    // can never make us buffer an unbounded body into memory (OOM DoS).
+    const reader = res.body?.getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    if (reader) {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        total += value.length;
+        if (total > MAX_BYTES) {
+          await reader.cancel();
+          return NextResponse.json({ error: 'image too large' }, { status: 502 });
+        }
+        chunks.push(value);
+      }
+    }
+    const buf = Buffer.concat(chunks);
+    if (buf.length === 0) {
+      return NextResponse.json({ error: 'not an image' }, { status: 502 });
     }
 
     // Write-through: tmp file + rename so concurrent requests never read a
