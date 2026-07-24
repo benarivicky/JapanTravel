@@ -31,3 +31,8 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:74401408081:web:b800d86167f5962ac3c470"
     availability: [BUILD, RUNTIME]
+  # Google Maps Places API (New) — genuine server-side secret, stored in Secret
+  # Manager (not plaintext). Runtime only; the link-preview route reads it per request.
+  - variable: GOOGLE_MAPS_API_KEY
+    secret: GOOGLE_MAPS_API_KEY
+    availability: [RUNTIME]
